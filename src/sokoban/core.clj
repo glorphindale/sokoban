@@ -5,11 +5,6 @@
 (defrecord World [])
 (defrecord Game [world uis input])
 
-(defn clear-screen [screen]
-  (let [blank (apply str (repeat 80 \space))]
-    (doseq [row (range 24)]
-      (s/put-string screen 0 row blank))))
-
 (defmulti draw-ui
   (fn [ui game screen]
     (:kind ui)))
@@ -27,7 +22,7 @@
   (s/put-string screen 0 1 "Press escape to exit, anything else to go."))
 
 (defn draw-game [game screen]
-  (clear-screen screen)
+  (s/clear screen)
   (doseq [ui (:uis game)]
     (draw-ui ui game screen))
   (s/redraw screen))
