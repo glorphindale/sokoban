@@ -2,7 +2,7 @@
     (:require [lanterna.screen :as s]))
 
 (defrecord UI [kind])
-(defrecord World [])
+(defrecord World [level])
 (defrecord Game [world uis input])
 
 (defmulti draw-ui
@@ -11,7 +11,7 @@
 
 (defmethod draw-ui :start [ui game screen]
   (s/put-string screen 0 0 "Welcome to the Sokoban!")
-  (s/put-string screen 0 1 "Press enter to win, anything else to lose."))
+  (s/put-string screen 0 1 "Press enter to start the game, anything else to lose."))
 
 (defmethod draw-ui :win [ui game screen]
   (s/put-string screen 0 0 "Congratulations, you win!")
@@ -20,6 +20,16 @@
 (defmethod draw-ui :lose [ui game screen]
   (s/put-string screen 0 0 "Sorry, better luck next time.")
   (s/put-string screen 0 1 "Press escape to exit, anything else to go."))
+
+(defn draw-world [screen world]
+  (doseq [line-idx (range 0 (count world))
+          :let [line (nth world line-idx)
+                screen-line-idx (+ 1 line-idx)]]
+  	(s/put-string screen 0 screen-line-idx line)))
+
+(defmethod draw-ui :game [ui game screen]
+  (s/put-string screen 0 0 "Press escape to exit")
+  (draw-world screen (->> game :world :level)))
 
 (defn draw-game [game screen]
   (s/clear screen)
@@ -33,7 +43,7 @@
 
 (defmethod process-input :start [game input]
   (if (= input :enter)
-    (assoc game :uis [(new UI :win)])
+    (assoc game :uis [(new UI :game)])
     (assoc game :uis [(new UI :lose)])))
 
 (defmethod process-input :win [game input]
@@ -46,6 +56,10 @@
     (assoc game :uis [])
     (assoc game :uis [(new UI :start)])))
 
+(defmethod process-input :game [game input]
+  (if (= input :escape)
+    (assoc game :uis [])))
+
 (defn get-input [game screen]
   (assoc game :input (s/get-key-blocking screen)))
 
@@ -57,9 +71,12 @@
         (recur (get-input game screen))
         (recur (process-input (dissoc game :input) input))))))
 
+(defn new-world []
+  ["#####" "#...#" "#...#" "#...#" "#####"])
+
 (defn new-game []
   (new Game
-       (new World)
+       (new World (new-world))
        [(new UI :start)]
        nil))
 
