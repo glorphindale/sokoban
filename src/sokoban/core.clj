@@ -1,72 +1,47 @@
 (ns sokoban.core
     (:require [lanterna.screen :as s]))
 
-(defrecord UI [kind])
-(defrecord World [level])
-(defrecord Game [world uis input])
+(defrecord Game [world input continue player-pos])
 
-(defmulti draw-ui
-  (fn [ui game screen]
-    (:kind ui)))
-
-(defmethod draw-ui :start [ui game screen]
-  (s/put-string screen 0 0 "Welcome to the Sokoban!")
-  (s/put-string screen 0 1 "Press enter to start the game, anything else to lose."))
-
-(defmethod draw-ui :win [ui game screen]
-  (s/put-string screen 0 0 "Congratulations, you win!")
-  (s/put-string screen 0 1 "Press escape to exit, anything else to restart."))
-
-(defmethod draw-ui :lose [ui game screen]
-  (s/put-string screen 0 0 "Sorry, better luck next time.")
-  (s/put-string screen 0 1 "Press escape to exit, anything else to go."))
-
-(defn draw-world [screen world]
+(defn draw-game [screen {:keys [world player-pos] :as game}]
+  (s/clear screen)
   (doseq [line-idx (range 0 (count world))
           :let [line (nth world line-idx)
-                screen-line-idx (+ 1 line-idx)]]
-  	(s/put-string screen 0 screen-line-idx line)))
-
-(defmethod draw-ui :game [ui game screen]
-  (s/put-string screen 0 0 "Press escape to exit")
-  (draw-world screen (->> game :world :level)))
-
-(defn draw-game [game screen]
-  (s/clear screen)
-  (doseq [ui (:uis game)]
-    (draw-ui ui game screen))
+                screen-line-idx (+ 0 line-idx)]]
+    (s/put-string screen 0 screen-line-idx line))
+  (s/put-string screen (nth player-pos 0) (nth player-pos 1) "@")
   (s/redraw screen))
-
-(defmulti process-input
-  (fn [game input]
-    (:kind (last (:uis game)))))
-
-(defmethod process-input :start [game input]
-  (if (= input :enter)
-    (assoc game :uis [(new UI :game)])
-    (assoc game :uis [(new UI :lose)])))
-
-(defmethod process-input :win [game input]
-  (if (= input :escape)
-    (assoc game :uis [])
-    (assoc game :uis [(new UI :start)])))
-
-(defmethod process-input :lose [game input]
-  (if (= input :escape)
-    (assoc game :uis [])
-    (assoc game :uis [(new UI :start)])))
-
-(defmethod process-input :game [game input]
-  (if (= input :escape)
-    (assoc game :uis [])))
 
 (defn get-input [game screen]
   (assoc game :input (s/get-key-blocking screen)))
 
+(defn dir-to-offset [dir]
+  (case dir
+    :w [-1 0]
+    :e [1 0]
+    :n [0 -1]
+    :s [0 1]))
+ 
+(defn offset-coords [[x y] [dx dy]]
+  [(+ x dx) (+ y dy)])
+
+(defn move-player [player-pos dir]
+  (offset-coords (dir-to-offset dir) player-pos))
+
+(defn process-input [game input]
+  (case input
+    :escape (assoc game :continue [])
+    \h (update-in game [:player-pos] move-player :w)
+    \j (update-in game [:player-pos] move-player :s)
+    \k (update-in game [:player-pos] move-player :n)
+    \l (update-in game [:player-pos] move-player :e)
+    game
+  ))
+
 (defn run-game [game screen]
-  (loop [{:keys [input uis] :as game} game]
-    (when-not (empty? uis)
-      (draw-game game screen)
+  (loop [{:keys [input continue] :as game} game]
+    (when-not (empty? continue)
+      (draw-game screen game)
       (if (nil? input)
         (recur (get-input game screen))
         (recur (process-input (dissoc game :input) input))))))
@@ -75,10 +50,7 @@
   ["#####" "#...#" "#...#" "#...#" "#####"])
 
 (defn new-game []
-  (new Game
-       (new World (new-world))
-       [(new UI :start)]
-       nil))
+  (new Game (new-world) nil [true] [0 0]))
 
 (defn main 
   ([screen-type] (main screen-type false))
