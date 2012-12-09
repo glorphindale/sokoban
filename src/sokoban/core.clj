@@ -25,18 +25,24 @@
 (defn offset-coords [[x y] [dx dy]]
   [(+ x dx) (+ y dy)])
 
-(defn move-player [player-pos dir]
-  (offset-coords (dir-to-offset dir) player-pos))
+(defn move-player [player-pos world dir]
+  (let [[new-x new-y] (offset-coords (dir-to-offset dir) player-pos)
+        dest-content (nth (nth world new-y) new-x)]
+    (if (= dest-content \#)
+      player-pos
+      [new-x new-y])
+  ))
 
 (defn process-input [game input]
+  (let [world (:world game)]
   (case input
     :escape (assoc game :continue [])
-    \h (update-in game [:player-pos] move-player :w)
-    \j (update-in game [:player-pos] move-player :s)
-    \k (update-in game [:player-pos] move-player :n)
-    \l (update-in game [:player-pos] move-player :e)
+    \h (update-in game [:player-pos] move-player world :w)
+    \j (update-in game [:player-pos] move-player world :s)
+    \k (update-in game [:player-pos] move-player world :n)
+    \l (update-in game [:player-pos] move-player world :e)
     game
-  ))
+  )))
 
 (defn run-game [game screen]
   (loop [{:keys [input continue] :as game} game]
@@ -50,7 +56,7 @@
   ["#####" "#...#" "#...#" "#...#" "#####"])
 
 (defn new-game []
-  (new Game (new-world) nil [true] [0 0]))
+  (new Game (new-world) nil [true] [1 1]))
 
 (defn main 
   ([screen-type] (main screen-type false))
