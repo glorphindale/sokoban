@@ -1,7 +1,6 @@
-(ns sokoban.core
-    (:require [lanterna.screen :as s]))
-
-(defrecord Game [world input continue player-pos])
+(ns sokoban.ui
+    (:require [lanterna.screen :as s]
+              [sokoban.logic :as logic]))
 
 (defn draw-game [screen {:keys [world player-pos] :as game}]
   (s/clear screen)
@@ -15,32 +14,14 @@
 (defn get-input [game screen]
   (assoc game :input (s/get-key-blocking screen)))
 
-(defn dir-to-offset [dir]
-  (case dir
-    :w [-1 0]
-    :e [1 0]
-    :n [0 -1]
-    :s [0 1]))
- 
-(defn offset-coords [[x y] [dx dy]]
-  [(+ x dx) (+ y dy)])
-
-(defn move-player [player-pos world dir]
-  (let [[new-x new-y] (offset-coords (dir-to-offset dir) player-pos)
-        dest-content (nth (nth world new-y) new-x)]
-    (if (= dest-content \#)
-      player-pos
-      [new-x new-y])
-  ))
-
 (defn process-input [game input]
   (let [world (:world game)]
   (case input
     :escape (assoc game :continue [])
-    \h (update-in game [:player-pos] move-player world :w)
-    \j (update-in game [:player-pos] move-player world :s)
-    \k (update-in game [:player-pos] move-player world :n)
-    \l (update-in game [:player-pos] move-player world :e)
+    \h (update-in game [:player-pos] logic/move-player world :w)
+    \j (update-in game [:player-pos] logic/move-player world :s)
+    \k (update-in game [:player-pos] logic/move-player world :n)
+    \l (update-in game [:player-pos] logic/move-player world :e)
     game
   )))
 
@@ -52,19 +33,13 @@
         (recur (get-input game screen))
         (recur (process-input (dissoc game :input) input))))))
 
-(defn new-world []
-  ["#####" "#...#" "#...#" "#...#" "#####"])
-
-(defn new-game []
-  (new Game (new-world) nil [true] [1 1]))
-
 (defn main 
   ([screen-type] (main screen-type false))
   ([screen-type block?]
     (letfn [(go []
               (let [screen (s/get-screen screen-type)]
                 (s/in-screen screen
-                              (run-game (new-game) screen))))]
+                              (run-game (logic/new-game) screen))))]
     (if block?
       (go)
       (future (go))))))
