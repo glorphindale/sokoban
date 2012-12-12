@@ -1,39 +1,55 @@
 (ns sokoban.logic)
 
-(defrecord Game [world input continue player-pos])
+(defrecord Game [world input continue])
+(defrecord World [walls zombies statues player])
 
 (defn new-world []
-  ["#####" "#...#" "#...#" "#.sz#" "#####"])
+  (World.
+       []
+       []
+       []
+       []))
+
+(defn parse-level [_]
+  (World.
+       [[0 0] [0 1] [0 2]
+        [1 0]       [1 2]
+        [2 0]       [2 2] [2 3]
+        [3 0]             [3 3]
+        [4 0] [4 1] [4 2] [4 3]]
+       []
+       []
+       [1 1]))
 
 (defn new-game []
-  (new Game (new-world) nil [true] [1 1]))
+  (Game. (parse-level nil) nil [true]))
 
 (defn dir-to-offset [dir]
   (case dir
-    :w [-1 0]
-    :e [1 0]
-    :n [0 -1]
-    :s [0 1]))
+    :w [0 -1]
+    :e [0 1]
+    :n [-1 0]
+    :s [1 0]))
  
-(defn offset-coords [[x y] [dx dy]]
-  [(+ x dx) (+ y dy)])
+(defn offset-coords [[x y] dir]
+  (let [[dx dy] (dir-to-offset dir)]
+    [(+ x dx) (+ y dy)]))
 
 (defn get-dest [world [x y]]
   (if (or (< x 0) (< y 0))
     \#
-    (nth (nth world x) y)))
+    ([x y] (:walls world))))
 
-(defn can-move? [world player-pos dir]
-  (let [dest-pos (offset-coords (dir-to-offset dir) player-pos)
-        dest-content (get-dest world dest-pos)]
-    (case dest-content
-      \# false
-      \s true
-      \. true
-      false)))
+(defn can-player-move? [world dir]
+  (let [walls (set (:walls world))
+        player-pos (:player world)
+        dest-pos (offset-coords player-pos dir)
+        is-wall? (contains? walls dest-pos)]
+    (not is-wall?)
+    ))
   
 (defn move-player [player-pos world dir]
-  (let [dest-pos (offset-coords (dir-to-offset dir) player-pos)]
-    (if (can-move? world player-pos dir)
+  (let [dest-pos (offset-coords player-pos dir)]
+    (if (can-player-move? world dir)
       dest-pos
       player-pos)))

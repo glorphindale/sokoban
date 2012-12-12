@@ -1,21 +1,34 @@
 (ns sokoban.core-test
-  (:import [sokoban.core UI World Game])
-  (:use clojure.test
-    sokoban.core))
+  (:use clojure.test)
+  (:import [sokoban.logic World Game]))
 
-(defn current-ui [game]
-  (:kind (last (:uis game))))
+(use '[sokoban.logic :as sl])
+
+(defn test-world []
+  (World.
+       #{[0 0] [0 1] [0 2]
+        [1 0]       [1 2] 
+        [2 0]       [2 2]
+        [3 0]       [3 2]
+        [4 0] [4 1] [4 2]}
+       []
+       []
+       [1 1]))
+
+(deftest basic
+  (testing "Basic stuff"
+           (is (= [1 0] (sl/offset-coords [2 0] :n)))
+  ))
 
 (deftest test-start
-  (let [game (new Game nil [(new UI :start)] nil)]
+  (let [world (test-world)]
 
-    (testing "Enter wins at the starting screen."
-      (let [result (process-input game :enter)]
-        (is (= (current-ui result) :win))))
+    (testing "World existence"
+        (is (not (empty? (:walls world)))))
+    (testing "Movement"
+        (is (sl/can-player-move? world :s))
+        (is (not (sl/can-player-move? world :n))))
 
-    (testing "Other keys lose at the starting screen."
-      (let [results (map (partial process-input game)
-                         [\space \a \A :escape :up :backspace])]
-        (doseq [result results]
-          (is (= (current-ui result) :lose)))))))
+
+    ))
 

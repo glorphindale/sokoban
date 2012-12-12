@@ -2,14 +2,14 @@
     (:require [lanterna.screen :as s]
               [sokoban.logic :as logic]))
 
-(defn draw-game [screen {:keys [world player-pos] :as game}]
-  (s/clear screen)
-  (doseq [line-idx (range 0 (count world))
-          :let [line (nth world line-idx)
-                screen-line-idx (+ 0 line-idx)]]
-    (s/put-string screen 0 screen-line-idx line))
-  (s/put-string screen (nth player-pos 0) (nth player-pos 1) "@")
-  (s/redraw screen))
+(defn draw-game [screen game]
+  (let [world (:world game)
+        player (:player world)]
+          (s/clear screen)
+          (doseq [[x y] (:walls world)]
+            (s/put-string screen y x "#"))
+          (s/put-string screen (nth player 1) (nth player 0) "@")
+          (s/redraw screen)))
 
 (defn get-input [game screen]
   (assoc game :input (s/get-key-blocking screen)))
@@ -18,10 +18,10 @@
   (let [world (:world game)]
   (case input
     :escape (assoc game :continue [])
-    \h (update-in game [:player-pos] logic/move-player world :w)
-    \j (update-in game [:player-pos] logic/move-player world :s)
-    \k (update-in game [:player-pos] logic/move-player world :n)
-    \l (update-in game [:player-pos] logic/move-player world :e)
+    \h (update-in game [:world :player] logic/move-player world :w)
+    \j (update-in game [:world :player] logic/move-player world :s)
+    \k (update-in game [:world :player] logic/move-player world :n)
+    \l (update-in game [:world :player] logic/move-player world :e)
     game
   )))
 
