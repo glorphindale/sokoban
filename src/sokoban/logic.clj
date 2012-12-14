@@ -1,4 +1,5 @@
-(ns sokoban.logic)
+(ns sokoban.logic
+  (:require [clojure.set :as cs]))
 
 (defrecord Game [world input continue])
 (defrecord World [walls zombies statues player])
@@ -12,13 +13,13 @@
 
 (defn parse-level [_]
   (World.
-       [[0 0] [0 1] [0 2]
+       #{[0 0] [0 1] [0 2]
         [1 0]       [1 2]
-        [2 0]       [2 2] [2 3]
-        [3 0]             [3 3]
-        [4 0] [4 1] [4 2] [4 3]]
-       []
-       []
+        [2 0]       [2 2] [2 3] [2 4] [2 5]
+        [3 0]                         [3 5]
+        [4 0] [4 1] [4 2] [4 3] [4 4] [4 5]}
+       #{[3 4]}
+       #{[3 2]}
        [1 1]))
 
 (defn new-game []
@@ -35,21 +36,34 @@
   (let [[dx dy] (dir-to-offset dir)]
     [(+ x dx) (+ y dy)]))
 
-(defn get-dest [world [x y]]
-  (if (or (< x 0) (< y 0))
-    \#
-    ([x y] (:walls world))))
+(defn process-statues [statues next-pos next-next-pos]
+  (if (contains? statues next-pos)
+    (-> statues
+      (disj next-pos)
+      (conj next-next-pos))
+    statues))
 
-(defn can-player-move? [world dir]
-  (let [walls (set (:walls world))
-        player-pos (:player world)
-        dest-pos (offset-coords player-pos dir)
-        is-wall? (contains? walls dest-pos)]
-    (not is-wall?)
+(defn get-next-state [world movement-dir]
+  (let [{:keys [walls player statues zomibes]} world
+        next-pos (offset-coords player movement-dir)
+        next-next-pos (offset-coords next-pos movement-dir)]
+    (-> world
+       (update-in [:statues] process-statues next-pos next-next-pos)
+       (assoc :player next-pos))
+  ))
+
+(defn is-state-valid? [world]
+  (let [{:keys [walls player statues zombies]} world
+        player-on-wall (cs/intersection walls #{player})
+        statue-on-wall (cs/intersection walls statues)]
+    (and
+      (= 0 (count player-on-wall))
+      (= 0 (count statue-on-wall)))
     ))
   
-(defn move-player [player-pos world dir]
-  (let [dest-pos (offset-coords player-pos dir)]
-    (if (can-player-move? world dir)
-      dest-pos
-      player-pos)))
+(defn move-player [world dir]
+  (let [next-state (get-next-state world dir)]
+    (if (is-state-valid? next-state)
+      next-state
+      world
+    )))

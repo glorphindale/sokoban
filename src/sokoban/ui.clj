@@ -8,6 +8,10 @@
           (s/clear screen)
           (doseq [[x y] (:walls world)]
             (s/put-string screen y x "#"))
+          (doseq [[x y] (:zombies world)]
+            (s/put-string screen y x "z"))
+          (doseq [[x y] (:statues world)]
+            (s/put-string screen y x "o"))
           (s/put-string screen (nth player 1) (nth player 0) "@")
           (s/redraw screen)))
 
@@ -18,10 +22,10 @@
   (let [world (:world game)]
   (case input
     :escape (assoc game :continue [])
-    \h (update-in game [:world :player] logic/move-player world :w)
-    \j (update-in game [:world :player] logic/move-player world :s)
-    \k (update-in game [:world :player] logic/move-player world :n)
-    \l (update-in game [:world :player] logic/move-player world :e)
+    \h (update-in game [:world] logic/move-player :w)
+    \j (update-in game [:world] logic/move-player :s)
+    \k (update-in game [:world] logic/move-player :n)
+    \l (update-in game [:world] logic/move-player :e)
     game
   )))
 
