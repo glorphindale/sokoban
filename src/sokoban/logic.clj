@@ -56,6 +56,11 @@
   (let [{:keys [zombies statues]} world]
     (cs/intersection zombies statues)))
 
+(defn win? [world]
+  (let [zombies (:zombies world)
+        statues-on-zombies (matched-statues world)]
+        (= (count zombies) (count statues-on-zombies))))
+
 (defn is-state-valid? [world]
   (let [{:keys [walls player statues zombies]} world
         player-on-wall (cs/intersection walls #{player})

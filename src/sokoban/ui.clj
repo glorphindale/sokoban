@@ -4,7 +4,8 @@
 
 (defn draw-game [screen game]
   (let [world (:world game)
-        player (:player world)]
+        player (:player world)
+        win (logic/win? world)]
           (s/clear screen)
           (doseq [[x y] (:walls world)]
             (s/put-string screen y x "#"))
@@ -15,6 +16,8 @@
           (doseq [[x y] (logic/matched-statues world)]
             (s/put-string screen y x "*"))
           (s/put-string screen (nth player 1) (nth player 0) "@")
+          (if win
+            (s/put-string screen 10 10 "Victory"))
           (s/redraw screen)))
 
 (defn get-input [game screen]
