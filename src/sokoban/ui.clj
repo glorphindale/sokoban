@@ -12,6 +12,8 @@
             (s/put-string screen y x "z"))
           (doseq [[x y] (:statues world)]
             (s/put-string screen y x "o"))
+          (doseq [[x y] (logic/matched-statues world)]
+            (s/put-string screen y x "*"))
           (s/put-string screen (nth player 1) (nth player 0) "@")
           (s/redraw screen)))
 
@@ -43,7 +45,7 @@
     (letfn [(go []
               (let [screen (s/get-screen screen-type)]
                 (s/in-screen screen
-                              (run-game (logic/new-game) screen))))]
+                             (run-game (logic/new-game) screen))))]
     (if block?
       (go)
       (future (go))))))

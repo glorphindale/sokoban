@@ -13,13 +13,13 @@
 
 (defn parse-level [_]
   (World.
-       #{[0 0] [0 1] [0 2]
-        [1 0]       [1 2]
-        [2 0]       [2 2] [2 3] [2 4] [2 5]
-        [3 0]                         [3 5]
-        [4 0] [4 1] [4 2] [4 3] [4 4] [4 5]}
-       #{[3 4]}
-       #{[3 2]}
+       #{ [0 0] [0 1] [0 2] [0 3] [0 4] [0 5]
+          [1 0]                         [1 5] 
+          [2 0]                         [2 5]
+          [3 0]                         [3 5]
+          [4 0] [4 1] [4 2] [4 3] [4 4] [4 5]}
+       #{[3 3]}
+       #{[2 2]}
        [1 1]))
 
 (defn new-game []
@@ -52,13 +52,17 @@
        (assoc :player next-pos))
   ))
 
+(defn matched-statues [world]
+  (let [{:keys [zombies statues]} world]
+    (cs/intersection zombies statues)))
+
 (defn is-state-valid? [world]
   (let [{:keys [walls player statues zombies]} world
         player-on-wall (cs/intersection walls #{player})
-        statue-on-wall (cs/intersection walls statues)]
+        statues-on-walls (cs/intersection walls statues)]
     (and
       (= 0 (count player-on-wall))
-      (= 0 (count statue-on-wall)))
+      (= 0 (count statues-on-walls)))
     ))
   
 (defn move-player [world dir]
