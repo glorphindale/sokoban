@@ -4,31 +4,29 @@
 
 (use '[sokoban.logic :as sl])
 
-(defn test-world []
+(def test-world
   (World.
-       #{[0 0] [0 1] [0 2]
-        [1 0]       [1 2] 
-        [2 0]       [2 2]
-        [3 0]       [3 2]
-        [4 0] [4 1] [4 2]}
-       []
-       []
+       #{ [0 0] [0 1] [0 2] [0 3] [0 4] [0 5]
+          [1 0]                         [1 5] 
+          [2 0]                         [2 5]
+          [3 0]                         [3 5]
+          [4 0] [4 1] [4 2] [4 3] [4 4] [4 5]}
+       #{[3 3]}
+       #{[2 2]}
        [1 1]))
+
+(def test-level
+  "######\n#@   #\n#  o #\n#   . #\n######")
 
 (deftest basic
   (testing "Basic stuff"
            (is (= [1 0] (sl/offset-coords [2 0] :n)))
   ))
 
-(deftest test-start
-  (let [world (test-world)]
-
-    (testing "World existence"
-        (is (not (empty? (:walls world)))))
-    (testing "Movement"
-        (is (sl/can-player-move? world :s))
-        (is (not (sl/can-player-move? world :n))))
-
-
-    ))
+(deftest parsing
+  (testing "Parsing"
+    (is (= (World. #{[0 0]} #{[0 1]} #{[0 2]} [0 3])
+           (sl/parse-level "#.o@")))
+    (is (= test-world (sl/parse-level test-level)))
+  ))
 

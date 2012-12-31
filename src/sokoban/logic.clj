@@ -1,29 +1,38 @@
 (ns sokoban.logic
-  (:require [clojure.set :as cs]))
+  (:require [clojure.set :as css]
+            [clojure.string :as string]
+            [clojure.java.io :as io]))
 
 (defrecord Game [world input continue])
 (defrecord World [walls zombies statues player])
 
 (defn new-world []
-  (World.
-       []
-       []
-       []
-       []))
+  (World. #{} #{} #{} []))
 
-(defn parse-level [_]
-  (World.
-       #{ [0 0] [0 1] [0 2] [0 3] [0 4] [0 5]
-          [1 0]                         [1 5] 
-          [2 0]                         [2 5]
-          [3 0]                         [3 5]
-          [4 0] [4 1] [4 2] [4 3] [4 4] [4 5]}
-       #{[3 3]}
-       #{[2 2]}
-       [1 1]))
+(defn index [world-lines]
+  (apply concat
+    (for [row (map-indexed vector (string/split-lines world-lines))]
+      (let [[idx line] row]
+        (map-indexed #(vec [idx %1 %2]) line)))))
+
+(defn transform-type [indexed-level ctype]
+    (->> indexed-level
+        (filter (fn [[_ _ c]] (= ctype c)))
+        (map (fn [[x y _]] [x y]))))
+
+(defn parse-level [level-str]
+  (let [indexed-str (index level-str)
+        walls (transform-type indexed-str \#)
+        zombies (transform-type indexed-str \.)
+        statues (transform-type indexed-str \o)
+        player (transform-type indexed-str \@)]
+    (World. (set walls) (set zombies) (set statues) (apply concat player))))
+
+(def test-level
+  "######\n#@   #\n#  o #\n#   .#\n######")
 
 (defn new-game []
-  (Game. (parse-level nil) nil [true]))
+  (Game. (parse-level test-level) nil [true]))
 
 (defn dir-to-offset [dir]
   (case dir
@@ -54,7 +63,7 @@
 
 (defn matched-statues [world]
   (let [{:keys [zombies statues]} world]
-    (cs/intersection zombies statues)))
+    (css/intersection zombies statues)))
 
 (defn win? [world]
   (let [zombies (:zombies world)
@@ -63,8 +72,8 @@
 
 (defn is-state-valid? [world]
   (let [{:keys [walls player statues zombies]} world
-        player-on-wall (cs/intersection walls #{player})
-        statues-on-walls (cs/intersection walls statues)]
+        player-on-wall (css/intersection walls #{player})
+        statues-on-walls (css/intersection walls statues)]
     (and
       (= 0 (count player-on-wall))
       (= 0 (count statues-on-walls)))
