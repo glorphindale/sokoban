@@ -29,7 +29,7 @@
     (World. (set walls) (set zombies) (set statues) (apply concat player))))
 
 (def test-level
-  "######\n#@   #\n#  o #\n#   .#\n######")
+  "######\n#@   #\n#  oo#\n#  ..#\n######")
 
 (defn new-game []
   (Game. (parse-level test-level) nil [true]))
@@ -76,8 +76,9 @@
         statues-on-walls (css/intersection walls statues)]
     (and
       (= 0 (count player-on-wall))
-      (= 0 (count statues-on-walls)))
-    ))
+      (= 0 (count statues-on-walls))
+      (= (count statues) (count zombies)) ; See if any statues share space
+      )))
   
 (defn move-player [world dir]
   (let [next-state (get-next-state world dir)]
