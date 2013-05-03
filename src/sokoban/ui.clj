@@ -2,10 +2,25 @@
     (:require [lanterna.screen :as s]
               [sokoban.logic :as logic]))
 
-(defn draw-game [screen game]
+(defmulti draw-ui
+  (fn [screen game]
+    (:ui game)))
+
+(defmethod draw-ui :starting [screen game]
+  ; TODO add proper selection screen
+  (s/clear screen)
+  (s/put-string screen 0 0 "Level selection")
+  (s/redraw screen))
+
+(defmethod draw-ui :victory [screen game]
+  ; TODO add proper victory screen
+  (s/clear screen)
+  (s/put-string screen 10 10 "Victory!")
+  (s/redraw screen))
+
+(defmethod draw-ui :playing [screen game]
   (let [world (:world game)
-        player (:player world)
-        win (logic/win? world)]
+        player (:player world)]
           (s/clear screen)
           (doseq [[x y] (:walls world)]
             (s/put-string screen y x "#"))
@@ -16,28 +31,45 @@
           (doseq [[x y] (logic/matched-statues world)]
             (s/put-string screen y x "*"))
           (s/put-string screen (nth player 1) (nth player 0) "@")
-          (if win
-            (s/put-string screen 10 10 "Victory"))
           (s/redraw screen)))
+
+(defmulti process-input
+  (fn [game input]
+    (:ui game)))
+
+(defmethod process-input :starting [game input]
+  ;; TODO add proper selection controls
+  (case input
+    :escape (assoc game :continue [])
+    (assoc game :ui :playing)))
+
+(defmethod process-input :victory [game input]
+  (case input
+    :escape (assoc game :continue [])
+    (assoc game :ui :starting)))
+
+(defmethod process-input :playing [game input]
+  (let [ui (:ui game)
+        world (:world game)
+        win (logic/win? world)]
+    (if win
+      (assoc game :ui :victory)
+      (case input
+        :escape (assoc game :continue [])
+        \h (update-in game [:world] logic/move-player :w)
+        \j (update-in game [:world] logic/move-player :s)
+        \k (update-in game [:world] logic/move-player :n)
+        \l (update-in game [:world] logic/move-player :e)
+        game
+      ))))
 
 (defn get-input [game screen]
   (assoc game :input (s/get-key-blocking screen)))
 
-(defn process-input [game input]
-  (let [world (:world game)]
-  (case input
-    :escape (assoc game :continue [])
-    \h (update-in game [:world] logic/move-player :w)
-    \j (update-in game [:world] logic/move-player :s)
-    \k (update-in game [:world] logic/move-player :n)
-    \l (update-in game [:world] logic/move-player :e)
-    game
-  )))
-
 (defn run-game [game screen]
   (loop [{:keys [input continue] :as game} game]
     (when-not (empty? continue)
-      (draw-game screen game)
+      (draw-ui screen game)
       (if (nil? input)
         (recur (get-input game screen))
         (recur (process-input (dissoc game :input) input))))))

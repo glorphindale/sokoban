@@ -3,7 +3,7 @@
             [clojure.string :as string]
             [clojure.java.io :as io]))
 
-(defrecord Game [world input continue])
+(defrecord Game [world input continue ui])
 (defrecord World [walls zombies statues player])
 
 (defn new-world []
@@ -32,7 +32,7 @@
   "######\n#@   #\n#  oo#\n#  ..#\n######")
 
 (defn new-game []
-  (Game. (parse-level test-level) nil [true]))
+  (Game. (parse-level test-level) nil [true] :starting))
 
 (defn dir-to-offset [dir]
   (case dir
