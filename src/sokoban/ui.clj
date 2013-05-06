@@ -1,6 +1,7 @@
 (ns sokoban.ui
-    (:require [lanterna.screen :as s]
-              [sokoban.logic :as logic]))
+  (:require [lanterna.screen :as s]
+            [sokoban.logic :as logic]
+            [sokoban.levels :as levels]))
 
 (defmulti draw-ui
   (fn [screen game]
@@ -80,7 +81,7 @@
     (letfn [(go []
               (let [screen (s/get-screen screen-type)]
                 (s/in-screen screen
-                             (run-game (logic/new-game) screen))))]
+                             (run-game (logic/new-game (levels/get-test-level)) screen))))]
     (if block?
       (go)
       (future (go))))))

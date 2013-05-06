@@ -1,38 +1,16 @@
 (ns sokoban.logic
   (:require [clojure.set :as css]
-            [clojure.string :as string]
             [clojure.java.io :as io]))
 
 (defrecord Game [world input continue ui])
 (defrecord World [walls zombies statues player])
 
-(defn new-world []
-  (World. #{} #{} #{} []))
+(defn new-world 
+  ([] (World. #{} #{} #{} []))
+  ([walls zombies statues player] (World. walls zombies statues player)))
 
-(defn index [world-lines]
-  (apply concat
-    (for [row (map-indexed vector (string/split-lines world-lines))]
-      (let [[idx line] row]
-        (map-indexed #(vec [idx %1 %2]) line)))))
-
-(defn transform-type [indexed-level ctype]
-    (->> indexed-level
-        (filter (fn [[_ _ c]] (= ctype c)))
-        (map (fn [[x y _]] [x y]))))
-
-(defn parse-level [level-str]
-  (let [indexed-str (index level-str)
-        walls (transform-type indexed-str \#)
-        zombies (transform-type indexed-str \.)
-        statues (transform-type indexed-str \o)
-        player (transform-type indexed-str \@)]
-    (World. (set walls) (set zombies) (set statues) (apply concat player))))
-
-(def test-level
-  "######\n#@   #\n#  oo#\n#  ..#\n######")
-
-(defn new-game []
-  (Game. (parse-level test-level) nil [true] :starting))
+(defn new-game [world]
+  (Game. world nil [true] :starting))
 
 (defn dir-to-offset [dir]
   (case dir
