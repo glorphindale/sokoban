@@ -1,5 +1,6 @@
 (ns sokoban.ui
   (:require [lanterna.screen :as s]
+            [clojure.string :as string]
             [sokoban.logic :as logic]
             [sokoban.levels :as levels]))
 
@@ -8,13 +9,18 @@
     (:ui game)))
 
 (defmethod draw-ui :starting [screen game]
-  ; TODO add proper selection screen
-  (s/clear screen)
-  (s/put-string screen 0 0 "Level selection")
-  (s/redraw screen))
+  (let [{:keys [selected-level]} game]
+    (s/clear screen)
+    (s/put-string screen 0 0 "Level selection")
+    (doseq [[idx level] (map-indexed vector (:levels game))]
+      (if (= idx selected-level)
+        (s/put-string screen 0 (inc idx) (string/join " " ["*" idx]))
+        (s/put-string screen 0 (inc idx) (string/join " " [" " idx])))
+    (s/redraw screen))))
 
 (defmethod draw-ui :victory [screen game]
   ; TODO add proper victory screen
+  ; TODO fix bug: game requires additional key press to advance here
   (s/clear screen)
   (s/put-string screen 10 10 "Victory!")
   (s/redraw screen))
@@ -38,16 +44,35 @@
   (fn [game input]
     (:ui game)))
 
+(defn try-select-level [next-level game]
+  (let [min-level 0
+        max-level (count (:levels game))]
+    (if (<= min-level next-level (- max-level 1))
+      (assoc game :selected-level next-level)
+      game)))
+
+(defn start-game [game]
+  (let [{:keys [levels selected-level]} game]
+    (-> game
+      (assoc :world (nth levels selected-level))
+      (assoc :ui :playing))))
+
 (defmethod process-input :starting [game input]
   ;; TODO add proper selection controls
-  (case input
-    :escape (assoc game :continue [])
-    (assoc game :ui :playing)))
+  (let [selected-level (:selected-level game)]
+    (case input
+      \j (try-select-level (+ selected-level 1) game)
+      \k (try-select-level (- selected-level 1) game)
+      :escape (assoc game :continue [])
+      :enter (start-game game)
+      game)))
 
 (defmethod process-input :victory [game input]
   (case input
     :escape (assoc game :continue [])
-    (assoc game :ui :starting)))
+    (-> game 
+      (assoc :ui :starting)
+      (dissoc :world))))
 
 (defmethod process-input :playing [game input]
   (let [ui (:ui game)
@@ -81,7 +106,7 @@
     (letfn [(go []
               (let [screen (s/get-screen screen-type)]
                 (s/in-screen screen
-                             (run-game (logic/new-game (levels/get-test-level)) screen))))]
+                             (run-game (logic/new-game levels/default-levels) screen))))]
     (if block?
       (go)
       (future (go))))))

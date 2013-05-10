@@ -2,15 +2,15 @@
   (:require [clojure.set :as css]
             [clojure.java.io :as io]))
 
-(defrecord Game [world input continue ui])
+(defrecord Game [world input continue ui levels selected-level])
 (defrecord World [walls zombies statues player])
 
 (defn new-world 
   ([] (World. #{} #{} #{} []))
   ([walls zombies statues player] (World. walls zombies statues player)))
 
-(defn new-game [world]
-  (Game. world nil [true] :starting))
+(defn new-game [levels]
+  (Game. nil nil [true] :starting levels 0))
 
 (defn dir-to-offset [dir]
   (case dir

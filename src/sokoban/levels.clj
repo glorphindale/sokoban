@@ -19,10 +19,13 @@
         zombies (transform-type indexed-str \.)
         statues (transform-type indexed-str \o)
         player (transform-type indexed-str \@)]
+    ; TODO add parsing of "statue on a zombie" case
     (logic/new-world (set walls) (set zombies) (set statues) (apply concat player))))
 
 (def test-level
   "######\n#@   #\n#  oo#\n#  ..#\n######")
 
-(defn get-test-level []
-  (parse-level test-level))
+(def default-levels
+  [(parse-level test-level)
+   (parse-level "  ##### \n###   # \n#.@o  # \n### o.# \n#.##o # \n# # . ##\n#o *oo.#\n#   .  #\n########")])
+                
