@@ -14,8 +14,8 @@
     (s/put-string screen 0 0 "Level selection")
     (doseq [[idx level] (map-indexed vector (:levels game))]
       (if (= idx selected-level)
-        (s/put-string screen 0 (inc idx) (string/join " " ["*" idx]))
-        (s/put-string screen 0 (inc idx) (string/join " " [" " idx])))
+        (s/put-string screen 0 (inc idx) (string/join " " ["*" idx (:level-name level)]))
+        (s/put-string screen 0 (inc idx) (string/join " " [" " idx (:level-name level)])))
     (s/redraw screen))))
 
 (defmethod draw-ui :victory [screen game]
@@ -86,6 +86,7 @@
         \j (update-in game [:world] logic/move-player :s)
         \k (update-in game [:world] logic/move-player :n)
         \l (update-in game [:world] logic/move-player :e)
+        \r (assoc game :world (nth (:levels game) (:selected-level game)))
         game
       ))))
 

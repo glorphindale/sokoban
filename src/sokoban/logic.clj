@@ -3,11 +3,11 @@
             [clojure.java.io :as io]))
 
 (defrecord Game [world input continue ui levels selected-level])
-(defrecord World [walls zombies statues player])
+(defrecord World [walls zombies statues player level-name])
 
 (defn new-world 
-  ([] (World. #{} #{} #{} []))
-  ([walls zombies statues player] (World. walls zombies statues player)))
+  ([] (World. #{} #{} #{} [] nil))
+  ([walls zombies statues player level-name] (World. walls zombies statues player level-name)))
 
 (defn new-game [levels]
   (Game. nil nil [true] :starting levels 0))
