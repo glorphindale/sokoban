@@ -32,12 +32,12 @@
           (doseq [[x y] (:walls world)]
             (s/put-string screen y x "#"))
           (doseq [[x y] (:zombies world)]
-            (s/put-string screen y x "z"))
+            (s/put-string screen y x "z" {:fg :green}))
           (doseq [[x y] (:statues world)]
-            (s/put-string screen y x "o"))
+            (s/put-string screen y x "o" {:fg :red}))
           (doseq [[x y] (logic/matched-statues world)]
-            (s/put-string screen y x "*"))
-          (s/put-string screen (nth player 1) (nth player 0) "@")
+            (s/put-string screen y x "*" {:fg :grey}))
+          (s/put-string screen (nth player 1) (nth player 0) "@" {:fg :yellow})
           (s/redraw screen)))
 
 (defmulti process-input
