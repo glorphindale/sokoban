@@ -4,19 +4,26 @@
             [sokoban.logic :as logic]
             [sokoban.levels :as levels]))
 
+(def offset [10 10])
+
 (defmulti draw-ui
   (fn [screen game]
     (:ui game)))
 
+(defn put-string [screen coords offset text]
+  (let [[x y] coords
+        [ox oy] offset]
+    (s/put-string screen (+ x ox) (+ y oy) text)))
+
 (defmethod draw-ui :starting [screen game]
   (let [{:keys [selected-level]} game]
     (s/clear screen)
-    (s/put-string screen 0 0 "Level selection")
+    (put-string screen [0 0] offset "Level selection:")
     (doseq [[idx level] (map-indexed vector (:levels game))]
       (if (= idx selected-level)
-        (s/put-string screen 0 (inc idx) (string/join " " ["*" idx (:level-name level)]))
-        (s/put-string screen 0 (inc idx) (string/join " " [" " idx (:level-name level)])))
-    (s/redraw screen))))
+        (put-string screen [0 (inc idx)] offset (string/join " " ["*" idx (:level-name level)]))
+        (put-string screen [0 (inc idx)] offset (string/join " " [" " idx (:level-name level)]))))
+    (s/redraw screen)))
 
 (defmethod draw-ui :victory [screen game]
   ; TODO add proper victory screen
@@ -25,19 +32,19 @@
   (s/put-string screen 10 10 "Victory!")
   (s/redraw screen))
 
+(defn draw-type [screen type-symbol coordinates [off-x off-y] color]
+  (doseq [[x y] coordinates]
+    (s/put-string screen (+ y off-y) (+ x off-x) type-symbol {:fg color})))
+
 (defmethod draw-ui :playing [screen game]
   (let [world (:world game)
         player (:player world)]
           (s/clear screen)
-          (doseq [[x y] (:walls world)]
-            (s/put-string screen y x "#"))
-          (doseq [[x y] (:zombies world)]
-            (s/put-string screen y x "z" {:fg :green}))
-          (doseq [[x y] (:statues world)]
-            (s/put-string screen y x "o" {:fg :red}))
-          (doseq [[x y] (logic/matched-statues world)]
-            (s/put-string screen y x "*" {:fg :grey}))
-          (s/put-string screen (nth player 1) (nth player 0) "@" {:fg :yellow})
+          (draw-type screen "#" (:walls world) offset :grey)
+          (draw-type screen "z" (:zombies world) offset :green)
+          (draw-type screen "$" (:statues world) offset :red)
+          (draw-type screen "*" (logic/matched-statues world) offset :grey)
+          (draw-type screen "@" [[(nth player 0) (nth player 1)]] offset :yellow)
           (s/redraw screen)))
 
 (defmulti process-input
@@ -58,7 +65,6 @@
       (assoc :ui :playing))))
 
 (defmethod process-input :starting [game input]
-  ;; TODO add proper selection controls
   (let [selected-level (:selected-level game)]
     (case input
       \j (try-select-level (+ selected-level 1) game)
@@ -75,6 +81,7 @@
       (dissoc :world))))
 
 (defmethod process-input :playing [game input]
+  ; TODO add "get to level selection screen" button
   (let [ui (:ui game)
         world (:world game)
         win (logic/win? world)]
