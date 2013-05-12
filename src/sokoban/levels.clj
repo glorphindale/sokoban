@@ -1,6 +1,7 @@
 (ns sokoban.levels
   (:require [clojure.string :as string]
-            [sokoban.logic :as logic]))
+            [sokoban.logic :as logic]
+            [clojure.java.io :as io]))
 
 (defn index [world-lines]
   (apply concat
@@ -28,7 +29,15 @@
 (def default-levels
   [(parse-level test-level "Test level")
    (parse-level "  ##### \n###   # \n#.@$  # \n### $.# \n#.##$ # \n# # . ##\n#$ *$$.#\n#   .  #\n########" "Wikipedia sample")])
-                
-;(defn get-fs-levels
-;  ([] (get-fs-levels "./levels"))
-;  ([dir] ()))
+
+(defn get-level-files [dir-name]
+  (filter #(-> (io/file %) .getName (.endsWith "lvl"))
+          (file-seq (io/file dir-name))))
+
+(defn get-fs-levels
+  ([] (get-fs-levels "./levels"))
+  ([dir-name] (map #(-> % slurp (parse-level (.getName %)))
+                   (get-level-files dir-name))))
+
+(defn get-all-levels []
+  (concat default-levels (get-fs-levels)))
