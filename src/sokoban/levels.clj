@@ -9,22 +9,21 @@
       (let [[idx line] row]
         (map-indexed #(vec [idx %1 %2]) line)))))
 
-(defn transform-type [indexed-level ctype]
+(defn transform-type [indexed-level ctypes]
     (->> indexed-level
-        (filter (fn [[_ _ c]] (= ctype c)))
+        (filter (fn [[_ _ c]] (contains? ctypes c)))
         (map (fn [[x y _]] [x y]))))
 
 (defn parse-level [level-str level-name]
   (let [indexed-str (index level-str)
-        walls (transform-type indexed-str \#)
-        zombies (transform-type indexed-str \.)
-        statues (transform-type indexed-str \$)
-        player (transform-type indexed-str \@)]
-    ; TODO add parsing of "statue on a zombie" case
+        walls (transform-type indexed-str #{\#})
+        zombies (transform-type indexed-str #{\. \*})
+        statues (transform-type indexed-str #{\$ \*})
+        player (transform-type indexed-str #{\@}) ]
     (logic/new-world (set walls) (set zombies) (set statues) (apply concat player) level-name)))
 
 (def test-level
-  "######\n#@   #\n#  $$#\n#  ..#\n######")
+  "######\n#@   #\n#  $$#\n# *..#\n######")
 
 (def default-levels
   [(parse-level test-level "Test level")
