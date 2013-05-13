@@ -5,7 +5,17 @@ Based on [RubyQuiz](http://www.rubyquiz.com/quiz5.html) and [The Caves of Clojur
 
 ## Usage
 
-FIXME
+h/j/k/k to move
+r to restart
+escape to exit
+
+## Future work
+
+* Add undo/redo
+* Add always on screen help
+* Add splash screen
+* Add backstory
+* Add level collection parsing
 
 ## License
 
