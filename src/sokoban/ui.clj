@@ -67,8 +67,8 @@
 (defmethod process-input :starting [game input]
   (let [selected-level (:selected-level game)]
     (case input
-      \j (try-select-level (+ selected-level 1) game)
-      \k (try-select-level (- selected-level 1) game)
+      \j (try-select-level (inc selected-level) game)
+      \k (try-select-level (dec selected-level) game)
       :escape (assoc game :continue [])
       :enter (start-game game)
       game)))
