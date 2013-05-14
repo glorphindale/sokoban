@@ -36,6 +36,14 @@
   (doseq [[x y] coordinates]
     (s/put-string screen (+ y off-y) (+ x off-x) type-symbol {:fg color})))
 
+(defn draw-help [screen]
+  (let [[cols rows] (s/get-size screen)
+        last-row (dec rows)
+        help-message "Use h/j/k/l to move up/left/right/down, r to restart level, ESC to exit"
+        help-len (count help-message)
+        col-pos (int (- (/ cols 2) (/ help-len 2)))]
+    (s/put-string screen col-pos last-row help-message {:fg :grey})))
+
 (defmethod draw-ui :playing [screen game]
   (let [world (:world game)
         player (:player world)]
@@ -45,6 +53,7 @@
     (draw-type screen "$" (:statues world) offset :red)
     (draw-type screen "*" (logic/matched-statues world) offset :grey)
     (draw-type screen "@" [[(nth player 0) (nth player 1)]] offset :yellow)
+    (draw-help screen)
     (s/redraw screen)))
 
 (defmulti process-input
@@ -100,6 +109,7 @@
 (defn get-input [game screen]
   (assoc game :input (s/get-key-blocking screen)))
 
+;; TODO fix order, should be "process input first, draw second"
 (defn run-game [game screen]
   (loop [{:keys [input continue] :as game} game]
     (when-not (empty? continue)
