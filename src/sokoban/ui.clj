@@ -27,7 +27,6 @@
 
 (defmethod draw-ui :victory [screen game]
   ; TODO add proper victory screen
-  ; TODO fix bug: game requires additional key press to advance here
   (s/clear screen)
   (s/put-string screen 10 10 "Victory!")
   (s/redraw screen))
@@ -39,18 +38,21 @@
 (defn draw-help [screen]
   (let [[cols rows] (s/get-size screen)
         last-row (dec rows)
+        last-last-row (dec last-row)
         help-message "Use h/j/k/l to move up/left/right/down, r to restart level, ESC to exit"
+        tut-message "Move yourself (@) statues ($) onto zombies (z) to stay alive!"
         help-len (count help-message)
         col-pos (int (- (/ cols 2) (/ help-len 2)))]
-    (s/put-string screen col-pos last-row help-message {:fg :grey})))
+    (s/put-string screen col-pos last-last-row help-message {:fg :grey})
+    (s/put-string screen col-pos last-row tut-message {:fg :grey})))
 
 (defmethod draw-ui :playing [screen game]
   (let [world (:world game)
         player (:player world)]
     (s/clear screen)
     (draw-type screen "#" (:walls world) offset :grey)
-    (draw-type screen "z" (:zombies world) offset :green)
-    (draw-type screen "$" (:statues world) offset :red)
+    (draw-type screen "z" (:zombies world) offset :red)
+    (draw-type screen "$" (:statues world) offset :green)
     (draw-type screen "*" (logic/matched-statues world) offset :grey)
     (draw-type screen "@" [[(nth player 0) (nth player 1)]] offset :yellow)
     (draw-help screen)
@@ -109,7 +111,6 @@
 (defn get-input [game screen]
   (assoc game :input (s/get-key-blocking screen)))
 
-;; TODO fix order, should be "process input first, draw second"
 (defn run-game [game screen]
   (loop [{:keys [input continue] :as game} game]
     (when-not (empty? continue)
