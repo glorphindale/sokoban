@@ -12,13 +12,15 @@ escape to exit
 ## Future work
 
 * Add undo/redo
-* Add always on screen help
 * Add splash screen
 * Add backstory
 * Add level collection parsing
+** Correct scrolling of a long level list
+* Unclear positioning scheme - should be improved
+* Use lanterna/move-cursor for level selection
 
 ## License
 
-Copyright © 2012 FIXME
+Copyright © 2013 glorphindale
 
 Distributed under the Eclipse Public License, the same as Clojure.

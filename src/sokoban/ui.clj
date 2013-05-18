@@ -48,13 +48,15 @@
 
 (defmethod draw-ui :playing [screen game]
   (let [world (:world game)
-        player (:player world)]
+        player (:player world)
+        player-pos [[(nth player 0) (nth player 1)]]
+        matched-statues (logic/matched-statues world)]
     (s/clear screen)
     (draw-type screen "#" (:walls world) offset :grey)
     (draw-type screen "z" (:zombies world) offset :red)
     (draw-type screen "$" (:statues world) offset :green)
-    (draw-type screen "*" (logic/matched-statues world) offset :grey)
-    (draw-type screen "@" [[(nth player 0) (nth player 1)]] offset :yellow)
+    (draw-type screen "*" matched-statues offset :blue)
+    (draw-type screen "@" player-pos offset :yellow)
     (draw-help screen)
     (s/redraw screen)))
 
@@ -95,6 +97,7 @@
   ; TODO add "get to level selection screen" button
   (let [ui (:ui game)
         world (:world game)
+        ; logic/win? check should occur after we process current input
         win (logic/win? world)]
     (if win
       (assoc game :ui :victory)
@@ -112,12 +115,13 @@
   (assoc game :input (s/get-key-blocking screen)))
 
 (defn run-game [game screen]
-  (loop [{:keys [input continue] :as game} game]
+  (draw-ui screen game)
+  (loop [{:keys [continue] :as game} game]
     (when-not (empty? continue)
-      (draw-ui screen game)
-      (if (nil? input)
-        (recur (get-input game screen))
-        (recur (process-input (dissoc game :input) input))))))
+      (let [input (s/get-key-blocking screen)
+            new-game (process-input game input)]
+        (draw-ui screen new-game)
+        (recur new-game)))))
 
 (defn main
   ([screen-type] (main screen-type false))
