@@ -6,14 +6,44 @@
 
 (def offset [10 10])
 
-(defmulti draw-ui
-  (fn [screen game]
-    (:ui game)))
-
+; Helper methods
 (defn put-string [screen coords offset text]
   (let [[x y] coords
         [ox oy] offset]
     (s/put-string screen (+ x ox) (+ y oy) text)))
+
+(defn draw-type [screen type-symbol coordinates [off-x off-y] color]
+  (doseq [[x y] coordinates]
+    (s/put-string screen (+ y off-y) (+ x off-x) type-symbol {:fg color})))
+
+(defn draw-help [screen]
+  (let [[cols rows] (s/get-size screen)
+        last-row (dec rows)
+        last-last-row (dec last-row)
+        help-message "Use h/j/k/l to move up/left/right/down, r to restart level, ESC to exit"
+        tut-message "Move yourself (@) statues ($) onto zombies (z) to stay alive!"
+        help-len (count help-message)
+        col-pos (int (- (/ cols 2) (/ help-len 2)))]
+    (s/put-string screen col-pos last-last-row help-message {:fg :grey})
+    (s/put-string screen col-pos last-row tut-message {:fg :grey})))
+
+(defn get-screen-center [screen]
+  (let [[cols rows] (s/get-size screen)
+        x (int (/ cols 2))
+        y (int (/ rows 2))]
+    [x y]))
+
+(defn get-level-offset [screen-center world-center]
+  (let [[b-x b-y] world-center
+        [c-x c-y] screen-center]
+    ; Note the juxtaposition - lanterna uses [y x] positions
+    ; and levels are presented in [x y] format
+    [(- c-y (int (/ b-y 2))) (- c-x (int (/ b-x 2))) ]))
+
+; Actual UI drawing
+(defmulti draw-ui
+  (fn [screen game]
+    (:ui game)))
 
 (defmethod draw-ui :starting [screen game]
   (let [{:keys [selected-level]} game]
@@ -31,39 +61,22 @@
   (s/put-string screen 10 10 "Victory!")
   (s/redraw screen))
 
-(defn draw-type [screen type-symbol coordinates [off-x off-y] color]
-  (doseq [[x y] coordinates]
-    (s/put-string screen (+ y off-y) (+ x off-x) type-symbol {:fg color})))
-
-(defn draw-help [screen]
-  (let [[cols rows] (s/get-size screen)
-        last-row (dec rows)
-        last-last-row (dec last-row)
-        help-message "Use h/j/k/l to move up/left/right/down, r to restart level, ESC to exit"
-        tut-message "Move yourself (@) statues ($) onto zombies (z) to stay alive!"
-        help-len (count help-message)
-        col-pos (int (- (/ cols 2) (/ help-len 2)))]
-    (s/put-string screen col-pos last-last-row help-message {:fg :grey})
-    (s/put-string screen col-pos last-row tut-message {:fg :grey})))
-
 (defmethod draw-ui :playing [screen game]
   (let [world (:world game)
         player (:player world)
         player-pos [[(nth player 0) (nth player 1)]]
-        matched-statues (logic/matched-statues world)]
+        matched-statues (logic/matched-statues world)
+        level-offset (get-level-offset (get-screen-center screen) (logic/get-bounds world))]
     (s/clear screen)
-    (draw-type screen "#" (:walls world) offset :grey)
-    (draw-type screen "z" (:zombies world) offset :red)
-    (draw-type screen "$" (:statues world) offset :green)
-    (draw-type screen "*" matched-statues offset :blue)
-    (draw-type screen "@" player-pos offset :yellow)
+    (draw-type screen "#" (:walls world) level-offset :grey)
+    (draw-type screen "z" (:zombies world) level-offset :red)
+    (draw-type screen "$" (:statues world) level-offset :green)
+    (draw-type screen "*" matched-statues level-offset :blue)
+    (draw-type screen "@" player-pos level-offset :yellow)
     (draw-help screen)
     (s/redraw screen)))
 
-(defmulti process-input
-  (fn [game input]
-    (:ui game)))
-
+; Input processing
 (defn try-select-level [next-level game]
   (let [min-level 0
         max-level (count (:levels game))]
@@ -76,6 +89,10 @@
     (-> game
       (assoc :world (nth levels selected-level))
       (assoc :ui :playing))))
+
+(defmulti process-input
+  (fn [game input]
+    (:ui game)))
 
 (defmethod process-input :starting [game input]
   (let [selected-level (:selected-level game)]
@@ -111,6 +128,7 @@
         game
         ))))
 
+; Main loop
 (defn get-input [game screen]
   (assoc game :input (s/get-key-blocking screen)))
 

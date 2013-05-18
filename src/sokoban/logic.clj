@@ -5,6 +5,7 @@
 (defrecord Game [world input continue ui levels selected-level])
 (defrecord World [walls zombies statues player level-name])
 
+; TODO handle player similar to other entities as a set
 (defn new-world 
   ([] (World. #{} #{} #{} [] nil))
   ([walls zombies statues player level-name] (World. walls zombies statues player level-name)))
@@ -12,13 +13,24 @@
 (defn new-game [levels]
   (Game. nil nil [true] :starting levels 0))
 
-(defn dir-to-offset [dir]
+(defn dir-to-offset
+  "Take direction and return offset in the following coordinate system:
+   .--→ y axis
+   |
+   ↓
+  x axis"
+  [dir]
   (case dir
-    :w [0 -1]
-    :e [0 1]
-    :n [-1 0]
-    :s [1 0]))
+              :n [-1 0]
+    :w [0 -1]           :e [0 1]
+              :s [1 0]
+  ))
  
+(defn get-bounds [world]
+  (let [max-x (apply max (map first (:walls world)))
+        max-y (apply max (map second (:walls world)))]
+    [max-x max-y]))
+
 (defn offset-coords [[x y] dir]
   (let [[dx dy] (dir-to-offset dir)]
     [(+ x dx) (+ y dy)]))
