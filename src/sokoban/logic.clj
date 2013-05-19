@@ -48,8 +48,7 @@
         next-next-pos (offset-coords next-pos movement-dir)]
     (-> world
        (update-in [:statues] process-statues next-pos next-next-pos)
-       (assoc :player next-pos))
-  ))
+       (assoc :player next-pos))))
 
 (defn matched-statues [world]
   (let [{:keys [zombies statues]} world]

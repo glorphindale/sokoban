@@ -12,6 +12,8 @@
         [ox oy] offset]
     (s/put-string screen (+ x ox) (+ y oy) text)))
 
+; Note the juxtaposition - lanterna uses [y x] positions
+; and levels are presented in [x y] format
 (defn draw-type [screen type-symbol coordinates [off-x off-y] color]
   (doseq [[x y] coordinates]
     (s/put-string screen (+ y off-y) (+ x off-x) type-symbol {:fg color})))
@@ -20,8 +22,8 @@
   (let [[cols rows] (s/get-size screen)
         last-row (dec rows)
         last-last-row (dec last-row)
-        help-message "Use h/j/k/l to move up/left/right/down, r to restart level, ESC to exit"
-        tut-message "Move yourself (@) statues ($) onto zombies (z) to stay alive!"
+        help-message "Use h/j/k/l to move up/left/right/down, r to restart level, q for level selection, ESC to exit"
+        tut-message "Move yourself (@) to push statues ($) onto zombies (z) to stay alive!"
         help-len (count help-message)
         col-pos (int (- (/ cols 2) (/ help-len 2)))]
     (s/put-string screen col-pos last-last-row help-message {:fg :grey})
@@ -33,11 +35,11 @@
         y (int (/ rows 2))]
     [x y]))
 
+; Note the juxtaposition - lanterna uses [y x] positions
+; and levels are presented in [x y] format
 (defn get-level-offset [screen-center world-center]
   (let [[b-x b-y] world-center
         [c-x c-y] screen-center]
-    ; Note the juxtaposition - lanterna uses [y x] positions
-    ; and levels are presented in [x y] format
     [(- c-y (int (/ b-y 2))) (- c-x (int (/ b-x 2))) ]))
 
 ; Actual UI drawing
@@ -125,6 +127,7 @@
         \k (update-in game [:world] logic/move-player :n)
         \l (update-in game [:world] logic/move-player :e)
         \r (assoc game :world (nth (:levels game) (:selected-level game)))
+        \q (assoc game :ui :starting)
         game
         ))))
 

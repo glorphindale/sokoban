@@ -16,7 +16,7 @@ escape to exit
 * Add backstory
 * Add level collection parsing
 ** Correct scrolling of a long level list
-* Unclear positioning scheme - should be improved
+* Unclear positioning scheme, levels are drawn in one way and text in another - should be improved
 * Use lanterna/move-cursor for level selection
 
 ## License
