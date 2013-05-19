@@ -52,15 +52,14 @@
     (s/clear screen)
     (put-string screen [0 0] offset "Level selection:")
     (doseq [[idx level] (map-indexed vector (:levels game))]
-      (if (= idx selected-level)
-        (put-string screen [0 (inc idx)] offset (string/join " " ["*" idx (:level-name level)]))
-        (put-string screen [0 (inc idx)] offset (string/join " " [" " idx (:level-name level)]))))
+      (put-string screen [0 (inc idx)] offset (string/join " " ["[" idx "]" (:level-name level)])))
+    (s/move-cursor screen (+ 2 (first offset)) (+ (inc selected-level) (second offset)))
     (s/redraw screen)))
 
 (defmethod draw-ui :victory [screen game]
   ; TODO add proper victory screen
   (s/clear screen)
-  (s/put-string screen 10 10 "Victory!")
+  (put-string screen [0 0] offset "Victory!")
   (s/redraw screen))
 
 (defmethod draw-ui :playing [screen game]
