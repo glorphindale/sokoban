@@ -27,16 +27,40 @@
 
 (def default-levels
   [(parse-level test-level "Test level")
-   (parse-level "  ##### \n###   # \n#.@$  # \n### $.# \n#.##$ # \n# # . ##\n#$ *$$.#\n#   .  #\n########" "Wikipedia sample")])
+   (parse-level "  ##### \n###   # \n#.@$  # \n### $.# \n#.##$ # \n# # . ##\n#$ *$$.#\n#   .  #\n########" "Wikipedia sample")
+   ])
 
-(defn get-level-files [dir-name]
-  (filter #(-> (io/file %) .getName (.endsWith "lvl"))
+(defn get-level-files [dir-name ext]
+  (filter #(-> (io/file %) .getName (.endsWith ext))
           (file-seq (io/file dir-name))))
+
+; Collection parsing
+(defn clean-file [file]
+  (let [content (slurp file)]
+    (filter not-empty (clojure.string/split content #"\r\n"))))
+
+(defn get-parts [content]
+  (partition-by
+     #(.startsWith % ";") content))
+
+(defn levels-from-collection [filename]
+  (let [parts (-> filename clean-file get-parts)
+        filtered-parts (filter #(not (.startsWith (nth % 0) ";")) parts)
+        raw-levels (map #(clojure.string/join "\r\n" %) filtered-parts)]
+    (map-indexed
+       (fn [idx item] (parse-level item (str "(" filename ") level " idx)))
+       raw-levels)))
+; /Collection parsing
+
+(defn get-collection-levels []
+  (apply concat
+    (map levels-from-collection (get-level-files "./levels" ".slc"))))
 
 (defn get-fs-levels
   ([] (get-fs-levels "./levels"))
   ([dir-name] (map #(-> % slurp (parse-level (.getName %)))
-                   (get-level-files dir-name))))
+                   (get-level-files dir-name ".lvl"))))
+
 
 (defn get-all-levels []
-  (concat default-levels (get-fs-levels)))
+  (concat default-levels (get-fs-levels) (get-collection-levels)))

@@ -15,7 +15,7 @@ escape to exit
 * Add splash screen
 * Add backstory
 * Add level collection parsing
-** Correct scrolling of a long level list
+* Correct scrolling of a long level list
 * Unclear positioning scheme, levels are drawn in one way and text in another - should be improved
 
 ## License
