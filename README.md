@@ -1,4 +1,4 @@
-# sokoban of the dead
+# Sokoban of the Dead
 
 You wake up at the cemetery. It's getting dark, and all of the tombstones are moved.
 Zombies start to raise from their graves. You must put tombstones back, or... Brainzzzzzz...
@@ -17,8 +17,15 @@ r to restart
 q to return to the level selection
 escape to exit
 
+## Resources
+
+Level collection was taken from [Sourcecode](http://www.sourcecode.se/sokoban/levtext.php?file=Original.slc).
+
 ## Future work
 
+* Add level selection screen centering
+* Add proper victory screen
+* Add steps tracking
 * Add undo/redo
 * Add splash screen
 * Add backstory

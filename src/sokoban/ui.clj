@@ -5,6 +5,7 @@
             [sokoban.levels :as levels]))
 
 (def offset [10 10])
+(def levels-per-page 10)
 
 ; Helper methods
 (defn put-string [screen coords offset text]
@@ -46,8 +47,6 @@
 (defmulti draw-ui
   (fn [screen game]
     (:ui game)))
-
-(def levels-per-page 10)
 
 (defmethod draw-ui :starting [screen game]
   (let [{:keys [selected-level levels]} game
