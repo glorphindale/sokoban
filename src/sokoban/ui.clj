@@ -47,13 +47,24 @@
   (fn [screen game]
     (:ui game)))
 
+(def levels-per-page 10)
+
 (defmethod draw-ui :starting [screen game]
-  (let [{:keys [selected-level]} game]
+  (let [{:keys [selected-level levels]} game
+        total-levels (count levels)
+        current-page (quot selected-level levels-per-page)
+        total-pages (inc (quot total-levels levels-per-page))
+        selected-level-offset (rem selected-level levels-per-page)
+        skip-levels-before (* current-page levels-per-page)
+        skip-levels-after (min (+ skip-levels-before levels-per-page) (count (:levels game)))
+        indexed-levels (vec (map-indexed vector (:levels game)))
+        levels-to-show (subvec indexed-levels skip-levels-before skip-levels-after)]
     (s/clear screen)
     (put-string screen [0 0] offset "Level selection:")
-    (doseq [[idx level] (map-indexed vector (:levels game))]
-      (put-string screen [0 (inc idx)] offset (string/join " " ["[" idx "]" (:level-name level)])))
-    (s/move-cursor screen (+ 2 (first offset)) (+ (inc selected-level) (second offset)))
+    (put-string screen [28 0] offset (str "page " (inc current-page) "/" total-pages))
+    (doseq [[idx level] levels-to-show]
+      (put-string screen [0 (inc (rem idx levels-per-page))] offset (string/join " " ["[" idx "]" (:level-name level)])))
+    (s/move-cursor screen (+ 2 (first offset)) (+ (inc selected-level-offset) (second offset)))
     (s/redraw screen)))
 
 (defmethod draw-ui :victory [screen game]
