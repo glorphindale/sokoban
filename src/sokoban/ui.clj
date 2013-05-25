@@ -69,6 +69,7 @@
         matched-statues (logic/matched-statues world)
         level-offset (get-level-offset (get-screen-center screen) (logic/get-bounds world))]
     (s/clear screen)
+    (s/put-string screen 0 0 (str "Level: " (:level-name world)))
     (draw-type screen "#" (:walls world) level-offset :grey)
     (draw-type screen "z" (:zombies world) level-offset :red)
     (draw-type screen "$" (:statues world) level-offset :green)

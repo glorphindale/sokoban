@@ -48,7 +48,7 @@
         filtered-parts (filter #(not (.startsWith (nth % 0) ";")) parts)
         raw-levels (map #(clojure.string/join "\r\n" %) filtered-parts)]
     (map-indexed
-       (fn [idx item] (parse-level item (str "(" filename ") level " idx)))
+       (fn [idx item] (parse-level item (str "(" filename ") level " (inc idx))))
        raw-levels)))
 ; /Collection parsing
 
