@@ -17,13 +17,13 @@
 (defn parse-level [level-str level-name]
   (let [indexed-str (index level-str)
         walls (transform-type indexed-str #{\#})
-        zombies (transform-type indexed-str #{\. \*})
+        zombies (transform-type indexed-str #{\. \* \+})
         statues (transform-type indexed-str #{\$ \*})
-        player (transform-type indexed-str #{\@}) ]
+        player (transform-type indexed-str #{\@ \+}) ]
     (logic/new-world (set walls) (set zombies) (set statues) (apply concat player) level-name)))
 
 (def test-level
-  "######\n#@   #\n#  $$#\n# *..#\n######")
+  "######\n#+   #\n#$  $#\n#  *.#\n######")
 
 (def default-levels
   [(parse-level test-level "Test level")
