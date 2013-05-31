@@ -6,7 +6,7 @@
 (defrecord World [walls zombies statues player level-name])
 
 ; TODO handle player similar to other entities as a set
-(defn new-world 
+(defn new-world
   ([] (World. #{} #{} #{} [] nil))
   ([walls zombies statues player level-name] (World. walls zombies statues player level-name)))
 
@@ -15,17 +15,17 @@
 
 (defn dir-to-offset
   "Take direction and return offset in the following coordinate system:
-   .--→ y axis
+   .--→ x axis
    |
    ↓
-  x axis"
+  y axis"
   [dir]
   (case dir
-              :n [-1 0]
-    :w [0 -1]           :e [0 1]
-              :s [1 0]
+              :n [0 -1]
+    :w [-1 0]           :e [1 0]
+              :s [0 1]
   ))
- 
+
 (defn get-bounds [world]
   (let [max-x (apply max (map first (:walls world)))
         max-y (apply max (map second (:walls world)))]
@@ -68,7 +68,7 @@
       (= 0 (count statues-on-walls))
       (= (count statues) (count zombies)) ; See if any statues share space
       )))
-  
+
 (defn move-player [world dir]
   (let [next-state (get-next-state world dir)]
     (if (is-state-valid? next-state)

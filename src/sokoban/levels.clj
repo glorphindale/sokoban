@@ -5,9 +5,8 @@
 
 (defn index [world-lines]
   (apply concat
-    (for [row (map-indexed vector (string/split-lines world-lines))]
-      (let [[idx line] row]
-        (map-indexed #(vec [idx %1 %2]) line)))))
+    (for [[row line] (map-indexed vector (string/split-lines world-lines))]
+        (map-indexed #(vec [%1 row %2]) line))))
 
 (defn transform-type [indexed-level ctypes]
     (->> indexed-level

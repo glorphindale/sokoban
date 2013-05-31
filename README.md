@@ -29,7 +29,8 @@ Level collection was taken from [Sourcecode](http://www.sourcecode.se/sokoban/le
 * Add undo/redo
 * Add splash screen
 * Add backstory
-* Unclear positioning scheme, levels are drawn in one way and text in another - should be improved
+* Add handling of big levels - scrolling, centering viewport on the player
+* Add proper font selection (looks ugly in linux swing)
 
 ## License
 

@@ -13,11 +13,9 @@
         [ox oy] offset]
     (s/put-string screen (+ x ox) (+ y oy) text)))
 
-; Note the juxtaposition - lanterna uses [y x] positions
-; and levels are presented in [x y] format
 (defn draw-type [screen type-symbol coordinates [off-x off-y] color]
   (doseq [[x y] coordinates]
-    (s/put-string screen (+ y off-y) (+ x off-x) type-symbol {:fg color})))
+    (s/put-string screen (+ x off-x) (+ y off-y) type-symbol {:fg color})))
 
 (defn draw-help [screen]
   (let [[cols rows] (s/get-size screen)
@@ -36,12 +34,11 @@
         y (int (/ rows 2))]
     [x y]))
 
-; Note the juxtaposition - lanterna uses [y x] positions
-; and levels are presented in [x y] format
+
 (defn get-level-offset [screen-center world-center]
   (let [[b-x b-y] world-center
         [c-x c-y] screen-center]
-    [(- c-y (int (/ b-y 2))) (- c-x (int (/ b-x 2))) ]))
+    [(- c-x (int (/ b-x 2))) (- c-y (int (/ b-y 2))) ]))
 
 ; Actual UI drawing
 (defmulti draw-ui
