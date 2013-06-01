@@ -4,7 +4,6 @@
             [sokoban.logic :as logic]
             [sokoban.levels :as levels]))
 
-(def offset [10 10])
 (def levels-per-page 10)
 
 ; Helper methods
@@ -13,7 +12,38 @@
         [ox oy] offset]
     (s/put-string screen (+ x ox) (+ y oy) text)))
 
-(defn draw-type [screen type-symbol coordinates [off-x off-y] color]
+(defn guess-box [text-lines]
+  (let [max-y (count text-lines)
+        max-x (apply max (map #(.length %) text-lines))]
+    [max-x max-y]))
+
+(defn box-center [[max-x max-y]]
+  (let [center-x (/ max-x 2)
+        center-y (/ max-y 2)]
+    (map int [center-x center-y])))
+
+(defn get-text-offset [screen-center text-center]
+  (let [[s-x s-y] screen-center
+        [t-x t-y] text-center]
+    [(- s-x t-x) (- s-y t-y)]))
+
+(defn prepare-selection-text [game]
+  (let [{:keys [selected-level levels]} game
+        total-levels (count levels)
+        current-page (quot selected-level levels-per-page)
+        total-pages (inc (quot total-levels levels-per-page))
+        selected-level-offset (rem selected-level levels-per-page)
+        skip-levels-before (* current-page levels-per-page)
+        skip-levels-after (min (+ skip-levels-before levels-per-page) (count (:levels game)))
+        indexed-levels (vec (map-indexed vector (:levels game)))
+        levels-to-show (subvec indexed-levels skip-levels-before skip-levels-after)]
+    (concat ["Level selection:"]
+      (map (fn [[idx level]] (string/join " " ["[" idx "]" (:level-name level)])) levels-to-show)
+      [(str "page " (inc current-page) "/" total-pages)])
+    ))
+
+; Actual UI drawing
+(defn draw-symbol [screen type-symbol coordinates [off-x off-y] color]
   (doseq [[x y] coordinates]
     (s/put-string screen (+ x off-x) (+ y off-y) type-symbol {:fg color})))
 
@@ -28,60 +58,49 @@
     (s/put-string screen col-pos last-last-row help-message {:fg :grey})
     (s/put-string screen col-pos last-row tut-message {:fg :grey})))
 
-(defn get-screen-center [screen]
-  (let [[cols rows] (s/get-size screen)
-        x (int (/ cols 2))
-        y (int (/ rows 2))]
-    [x y]))
-
-
-(defn get-level-offset [screen-center world-center]
-  (let [[b-x b-y] world-center
-        [c-x c-y] screen-center]
-    [(- c-x (int (/ b-x 2))) (- c-y (int (/ b-y 2))) ]))
-
-; Actual UI drawing
 (defmulti draw-ui
   (fn [screen game]
     (:ui game)))
 
 (defmethod draw-ui :starting [screen game]
   (let [{:keys [selected-level levels]} game
-        total-levels (count levels)
-        current-page (quot selected-level levels-per-page)
-        total-pages (inc (quot total-levels levels-per-page))
+        levels-text (prepare-selection-text game)
+        lines (map-indexed vector levels-text)
         selected-level-offset (rem selected-level levels-per-page)
-        skip-levels-before (* current-page levels-per-page)
-        skip-levels-after (min (+ skip-levels-before levels-per-page) (count (:levels game)))
-        indexed-levels (vec (map-indexed vector (:levels game)))
-        levels-to-show (subvec indexed-levels skip-levels-before skip-levels-after)]
+        text-center (box-center (guess-box levels-text))
+        screen-center (box-center (s/get-size screen))
+        offset (get-text-offset screen-center text-center)]
     (s/clear screen)
-    (put-string screen [0 0] offset "Level selection:")
-    (put-string screen [28 0] offset (str "page " (inc current-page) "/" total-pages))
-    (doseq [[idx level] levels-to-show]
-      (put-string screen [0 (inc (rem idx levels-per-page))] offset (string/join " " ["[" idx "]" (:level-name level)])))
+    (doseq [[line text] lines]
+      (put-string screen [0 line] offset text))
     (s/move-cursor screen (+ 2 (first offset)) (+ (inc selected-level-offset) (second offset)))
     (s/redraw screen)))
 
 (defmethod draw-ui :victory [screen game]
-  ; TODO add proper victory screen
-  (s/clear screen)
-  (put-string screen [0 0] offset "Victory!")
-  (s/redraw screen))
+  (let [lines [[0 "Victory!"]]
+        lines-box (guess-box lines)
+        offset (box-center (s/get-size screen))]
+    ; TODO add proper victory screen
+    (s/clear screen)
+    (doseq [[line text] lines]
+        (put-string screen [0 line] offset text))
+    (s/redraw screen)))
 
 (defmethod draw-ui :playing [screen game]
   (let [world (:world game)
         player (:player world)
         player-pos [[(nth player 0) (nth player 1)]]
         matched-statues (logic/matched-statues world)
-        level-offset (get-level-offset (get-screen-center screen) (logic/get-bounds world))]
+        level-center (box-center (logic/get-bounds world))
+        screen-center (box-center (s/get-size screen))
+        offset (get-text-offset screen-center level-center)]
     (s/clear screen)
     (s/put-string screen 0 0 (str "Level: " (:level-name world)))
-    (draw-type screen "#" (:walls world) level-offset :grey)
-    (draw-type screen "z" (:zombies world) level-offset :red)
-    (draw-type screen "$" (:statues world) level-offset :green)
-    (draw-type screen "*" matched-statues level-offset :blue)
-    (draw-type screen "@" player-pos level-offset :yellow)
+    (draw-symbol screen "#" (:walls world) offset :grey)
+    (draw-symbol screen "z" (:zombies world) offset :red)
+    (draw-symbol screen "$" (:statues world) offset :green)
+    (draw-symbol screen "*" matched-statues offset :blue)
+    (draw-symbol screen "@" player-pos offset :yellow)
     (draw-help screen)
     (s/redraw screen)))
 
@@ -120,7 +139,6 @@
       (dissoc :world))))
 
 (defmethod process-input :playing [game input]
-  ; TODO add "get to level selection screen" button
   (let [ui (:ui game)
         world (:world game)
         ; logic/win? check should occur after we process current input

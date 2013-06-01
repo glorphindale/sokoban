@@ -23,7 +23,6 @@ Level collection was taken from [Sourcecode](http://www.sourcecode.se/sokoban/le
 
 ## Future work
 
-* Add level selection screen centering
 * Add proper victory screen
 * Add steps tracking
 * Add undo/redo
