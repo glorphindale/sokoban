@@ -74,11 +74,14 @@
         selected-level-offset (rem selected-level levels-per-page)
         text-center (box-center (guess-box levels-text))
         screen-center (box-center (s/get-size screen))
-        offset (get-text-offset screen-center text-center)]
+        offset (get-text-offset screen-center text-center)
+        [_ rows] (s/get-size screen)
+        last-row (dec rows)]
     (s/clear screen)
     (doseq [[line text] lines]
       (put-string screen [0 line] offset text))
     (s/move-cursor screen (+ 2 (first offset)) (+ (inc selected-level-offset) (second offset)))
+    (s/put-string screen 0 last-row (str "Use j/k/PageUp/PageDown to select a level, Enter to play"))
     (s/redraw screen)))
 
 (defmethod draw-ui :victory [screen game]
@@ -132,6 +135,8 @@
     (case input
       \j (try-select-level (inc selected-level) game)
       \k (try-select-level (dec selected-level) game)
+      :page-down (try-select-level (+ selected-level levels-per-page) game)
+      :page-up (try-select-level (- selected-level levels-per-page) game)
       :escape (assoc game :continue [])
       :enter (start-game game)
       game)))
