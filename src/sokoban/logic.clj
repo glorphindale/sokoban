@@ -5,9 +5,8 @@
 (defrecord Game [world input continue ui levels selected-level])
 (defrecord World [walls zombies statues player level-name])
 
-; TODO handle player similar to other entities as a set
 (defn new-world
-  ([] (World. #{} #{} #{} [] nil))
+  ([] (World. #{} #{} #{} #{} nil))
   ([walls zombies statues player level-name] (World. walls zombies statues player level-name)))
 
 (defn new-game [levels]
@@ -44,11 +43,11 @@
 
 (defn get-next-state [world movement-dir]
   (let [{:keys [walls player statues zomibes]} world
-        next-pos (offset-coords player movement-dir)
+        next-pos (offset-coords (first player) movement-dir)
         next-next-pos (offset-coords next-pos movement-dir)]
     (-> world
        (update-in [:statues] process-statues next-pos next-next-pos)
-       (assoc :player next-pos))))
+       (assoc :player #{next-pos}))))
 
 (defn matched-statues [world]
   (let [{:keys [zombies statues]} world]
@@ -61,7 +60,7 @@
 
 (defn is-state-valid? [world]
   (let [{:keys [walls player statues zombies]} world
-        player-on-wall (css/intersection walls #{player})
+        player-on-wall (css/intersection walls player)
         statues-on-walls (css/intersection walls statues)]
     (and
       (= 0 (count player-on-wall))

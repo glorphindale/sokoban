@@ -19,7 +19,7 @@
         zombies (transform-type indexed-str #{\. \* \+})
         statues (transform-type indexed-str #{\$ \*})
         player (transform-type indexed-str #{\@ \+}) ]
-    (logic/new-world (set walls) (set zombies) (set statues) (apply concat player) level-name)))
+    (logic/new-world (set walls) (set zombies) (set statues) (set player) level-name)))
 
 (def test-level
   "######\n#+   #\n#$  $#\n#  *.#\n######")

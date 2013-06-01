@@ -89,7 +89,6 @@
 (defmethod draw-ui :playing [screen game]
   (let [world (:world game)
         player (:player world)
-        player-pos [[(nth player 0) (nth player 1)]]
         matched-statues (logic/matched-statues world)
         level-center (box-center (logic/get-bounds world))
         screen-center (box-center (s/get-size screen))
@@ -100,8 +99,9 @@
     (draw-symbol screen "z" (:zombies world) offset :red)
     (draw-symbol screen "$" (:statues world) offset :green)
     (draw-symbol screen "*" matched-statues offset :blue)
-    (draw-symbol screen "@" player-pos offset :yellow)
+    (draw-symbol screen "@" player offset :yellow)
     (draw-help screen)
+    (s/move-cursor screen 0 1)
     (s/redraw screen)))
 
 ; Input processing
