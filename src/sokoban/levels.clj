@@ -3,17 +3,23 @@
             [sokoban.logic :as logic]
             [clojure.java.io :as io]))
 
-(defn index [world-lines]
+(defn index
+  "Enumerate every character in the level with its [x y] position. Return [x y character] sequence."
+  [world-lines]
   (apply concat
     (for [[row line] (map-indexed vector (string/split-lines world-lines))]
         (map-indexed #(vec [%1 row %2]) line))))
 
-(defn transform-type [indexed-level ctypes]
+(defn transform-type
+  "indexed-level is a sequence of [x y type] entries, ctypes is a set of types.
+    Return positions of entries that match specified types."
+  [indexed-level ctypes]
     (->> indexed-level
         (filter (fn [[_ _ c]] (contains? ctypes c)))
         (map (fn [[x y _]] [x y]))))
 
 (defn parse-level [level-str level-name]
+  "Take textual represenation of sokoban level and return World filled with entities."
   (let [indexed-str (index level-str)
         walls (transform-type indexed-str #{\#})
         zombies (transform-type indexed-str #{\. \* \+})
@@ -29,8 +35,8 @@
    (parse-level "  ##### \n###   # \n#.@$  # \n### $.# \n#.##$ # \n# # . ##\n#$ *$$.#\n#   .  #\n########" "Wikipedia sample")
    ])
 
-(defn get-level-files [dir-name ext]
-  (filter #(-> (io/file %) .getName (.endsWith ext))
+(defn files-by-ext [dir-name ext]
+  (filter #(-> % .getName (.endsWith ext))
           (file-seq (io/file dir-name))))
 
 ; Collection parsing
@@ -39,27 +45,30 @@
     (filter not-empty (clojure.string/split content #"\r\n"))))
 
 (defn get-parts [content]
-  (partition-by
-     #(.startsWith % ";") content))
+  (->> content
+       (partition-by #(.startsWith % ";"))
+       (filter #(not (.startsWith (first %) ";")))))
+
+(defn get-level-name [coll-path idx]
+  (let [[_ coll-name] (re-find #".+\\(.+).slc" (str coll-path))]
+    (str "(" coll-name ") level " idx)))
 
 (defn levels-from-collection [filename]
   (let [parts (-> filename clean-file get-parts)
-        filtered-parts (filter #(not (.startsWith (nth % 0) ";")) parts)
-        raw-levels (map #(clojure.string/join "\r\n" %) filtered-parts)]
+        raw-levels (map #(clojure.string/join "\r\n" %) parts)]
     (map-indexed
-       (fn [idx item] (parse-level item (str "(" filename ") level " (inc idx))))
+       (fn [idx level] (parse-level level (get-level-name filename (inc idx))))
        raw-levels)))
 ; /Collection parsing
 
 (defn get-collection-levels []
   (apply concat
-    (map levels-from-collection (get-level-files "./levels" ".slc"))))
+    (map levels-from-collection (files-by-ext "./levels" ".slc"))))
 
 (defn get-fs-levels
   ([] (get-fs-levels "./levels"))
   ([dir-name] (map #(-> % slurp (parse-level (.getName %)))
-                   (get-level-files dir-name ".lvl"))))
-
+                   (files-by-ext dir-name ".lvl"))))
 
 (defn get-all-levels []
   (concat default-levels (get-fs-levels) (get-collection-levels)))

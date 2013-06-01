@@ -54,7 +54,7 @@
         statues-on-zombies (matched-statues world)]
         (= (count zombies) (count statues-on-zombies))))
 
-(defn is-state-valid? [world]
+(defn is-world-valid? [world]
   (let [{:keys [walls player statues zombies]} world
         player-on-wall (css/intersection walls player)
         statues-on-walls (css/intersection walls statues)]
@@ -66,7 +66,7 @@
 
 (defn move-player [world dir]
   (let [next-state (get-next-state world dir)]
-    (if (is-state-valid? next-state)
+    (if (is-world-valid? next-state)
       next-state
       world
     )))
