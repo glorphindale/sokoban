@@ -51,16 +51,13 @@
   (doseq [[x y] coordinates]
     (s/put-string screen (+ x off-x) (+ y off-y) type-symbol {:fg color})))
 
-(defn draw-help [screen]
-  (let [[cols rows] (s/get-size screen)
-        last-row (dec rows)
-        last-last-row (dec last-row)
-        help-message "Use h/j/k/l to move up/left/right/down, r to restart level, q for level selection, ESC to exit"
-        tut-message "Move yourself (@) to push statues ($) onto zombies (z) to stay alive!"
-        help-len (count help-message)
-        col-pos (int (- (/ cols 2) (/ help-len 2)))]
-    (s/put-string screen col-pos last-last-row help-message {:fg :grey})
-    (s/put-string screen col-pos last-row tut-message {:fg :grey})))
+(defn draw-help [screen messages]
+  (doseq [[idx msg] (map-indexed vector messages)]
+    (let [[cols rows] (s/get-size screen)
+          row (+ (- rows (count messages)) idx)
+          msg-len (count msg)
+          col-pos (int (- (/ cols 2) (/ msg-len 2)))]
+      (s/put-string screen col-pos row msg {:fg :grey}))))
 
 ; There are three screens - level selection, game and victory.
 (defmulti draw-ui
@@ -81,18 +78,22 @@
     (doseq [[line text] lines]
       (put-string screen [0 line] offset text))
     (s/move-cursor screen (+ 2 (first offset)) (+ (inc selected-level-offset) (second offset)))
-    (s/put-string screen 0 last-row (str "Use j/k/PageUp/PageDown to select a level, Enter to play"))
+    (draw-help screen ["Use j/k/PageUp/PageDown to select a level, Enter to play, ESC to exit"])
     (s/redraw screen)))
 
 (defmethod draw-ui :victory [screen game]
-  (let [lines [[0 "Victory!"]]
-        lines-box (guess-box lines)
-        offset (box-center (s/get-size screen))]
+  (let [lines ["Victory!" "Press any key to return to the level selection screen"]
+        text-center (box-center (guess-box lines))
+        screen-center (box-center (s/get-size screen))
+        offset (get-text-offset screen-center text-center)]
     ; TODO add proper victory screen
     (s/clear screen)
-    (doseq [[line text] lines]
+    (doseq [[line text] (map-indexed vector lines)]
         (put-string screen [0 line] offset text))
     (s/redraw screen)))
+
+;help-message
+;tut-message
 
 (defmethod draw-ui :playing [screen game]
   (let [world (:world game)
@@ -108,7 +109,8 @@
     (draw-symbol screen "$" (:statues world) offset :green)
     (draw-symbol screen "*" matched-statues offset :blue)
     (draw-symbol screen "@" player offset :yellow)
-    (draw-help screen)
+    (draw-help screen ["Use h/j/k/l to move up/left/right/down, r to restart level, q for level selection, ESC to exit"
+                       "Move yourself (@) to push statues ($) onto zombies (z) to stay alive!"])
     (s/move-cursor screen 0 1)
     (s/redraw screen)))
 
