@@ -6,6 +6,10 @@
 
 (def levels-per-page 10)
 
+(defrecord Game [world input continue ui levels selected-level])
+(defn new-game [levels]
+  (Game. nil nil [true] :selection levels 0))
+
 ; Helper methods
 (defn put-string [screen coords offset text]
   (let [[x y] coords
@@ -58,11 +62,12 @@
     (s/put-string screen col-pos last-last-row help-message {:fg :grey})
     (s/put-string screen col-pos last-row tut-message {:fg :grey})))
 
+; There are three screens - level selection, game and victory.
 (defmulti draw-ui
   (fn [screen game]
     (:ui game)))
 
-(defmethod draw-ui :starting [screen game]
+(defmethod draw-ui :selection [screen game]
   (let [{:keys [selected-level levels]} game
         levels-text (prepare-selection-text game)
         lines (map-indexed vector levels-text)
@@ -122,7 +127,7 @@
   (fn [game input]
     (:ui game)))
 
-(defmethod process-input :starting [game input]
+(defmethod process-input :selection [game input]
   (let [selected-level (:selected-level game)]
     (case input
       \j (try-select-level (inc selected-level) game)
@@ -135,7 +140,7 @@
   (case input
     :escape (assoc game :continue [])
     (-> game
-      (assoc :ui :starting)
+      (assoc :ui :selection)
       (dissoc :world))))
 
 (defmethod process-input :playing [game input]
@@ -152,7 +157,7 @@
         \k (update-in game [:world] logic/move-player :n)
         \l (update-in game [:world] logic/move-player :e)
         \r (assoc game :world (nth (:levels game) (:selected-level game)))
-        \q (assoc game :ui :starting)
+        \q (assoc game :ui :selection)
         game
         ))))
 
@@ -175,7 +180,7 @@
    (letfn [(go []
              (let [screen (s/get-screen screen-type)]
                (s/in-screen screen
-                            (run-game (logic/new-game (levels/get-all-levels)) screen))))]
+                            (run-game (new-game (levels/get-all-levels)) screen))))]
      (if block?
        (go)
        (future (go))))))

@@ -2,15 +2,11 @@
   (:require [clojure.set :as css]
             [clojure.java.io :as io]))
 
-(defrecord Game [world input continue ui levels selected-level])
 (defrecord World [walls zombies statues player level-name])
 
 (defn new-world
   ([] (World. #{} #{} #{} #{} nil))
   ([walls zombies statues player level-name] (World. walls zombies statues player level-name)))
-
-(defn new-game [levels]
-  (Game. nil nil [true] :starting levels 0))
 
 (defn dir-to-offset
   "Take direction and return offset in the following coordinate system:
