@@ -6,9 +6,9 @@
 
 (def levels-per-page 10)
 
-(defrecord Game [world input continue ui levels selected-level])
+(defrecord Game [world history input continue ui levels selected-level])
 (defn new-game [levels]
-  (Game. nil nil [true] :selection levels 0))
+  (Game. nil nil nil [true] :selection levels 0))
 
 ; Helper methods
 (defn put-string [screen coords offset text]
@@ -92,9 +92,6 @@
         (put-string screen [0 line] offset text))
     (s/redraw screen)))
 
-;help-message
-;tut-message
-
 (defmethod draw-ui :playing [screen game]
   (let [world (:world game)
         player (:player world)
@@ -109,7 +106,8 @@
     (draw-symbol screen "$" (:statues world) offset :green)
     (draw-symbol screen "*" matched-statues offset :blue)
     (draw-symbol screen "@" player offset :yellow)
-    (draw-help screen ["Use h/j/k/l to move up/left/right/down, r to restart level, q for level selection, ESC to exit"
+    (draw-help screen ["Use h/j/k/l to move up/left/right/down"
+                       "r to restart level, q for level selection, u to undo previous moves, ESC to exit"
                        "Move yourself (@) to push statues ($) onto zombies (z) to stay alive!"])
     (s/move-cursor screen 0 1)
     (s/redraw screen)))
@@ -123,9 +121,11 @@
       game)))
 
 (defn start-game [game]
-  (let [{:keys [levels selected-level]} game]
+  (let [{:keys [levels selected-level]} game
+        new-level (nth levels selected-level)]
     (-> game
-      (assoc :world (nth levels selected-level))
+      (assoc :world new-level)
+      (assoc :history [new-level])
       (assoc :ui :playing))))
 
 (defmulti process-input
@@ -150,19 +150,38 @@
       (assoc :ui :selection)
       (dissoc :world))))
 
+(defn apply-move [game move]
+  (let [next-world (logic/move-player (:world game) move)
+        history (:history game)]
+    (-> game
+        (assoc :world next-world)
+        (assoc :history (conj history next-world)))))
+
+(defn undo-move [game]
+  (let [history (:history game)
+        prev-history (pop history)
+        prev-world (peek prev-history)]
+    (if (empty? prev-history)
+      game
+      (-> game
+          (assoc :world prev-world)
+          (assoc :history prev-history)))))
+
 (defmethod process-input :playing [game input]
   (let [ui (:ui game)
         world (:world game)
         ; logic/win? check should occur after we process current input
         win (logic/win? world)]
+    (println world)
     (if win
       (assoc game :ui :victory)
       (case input
         :escape (assoc game :continue [])
-        \h (update-in game [:world] logic/move-player :w)
-        \j (update-in game [:world] logic/move-player :s)
-        \k (update-in game [:world] logic/move-player :n)
-        \l (update-in game [:world] logic/move-player :e)
+        \h (apply-move game :w)
+        \j (apply-move game :s)
+        \k (apply-move game :n)
+        \l (apply-move game :e)
+        \u (undo-move game)
         \r (assoc game :world (nth (:levels game) (:selected-level game)))
         \q (assoc game :ui :selection)
         game
