@@ -1,14 +1,11 @@
 (ns sokoban.ui
   (:require [lanterna.screen :as s]
             [clojure.string :as string]
-            [sokoban.logic :as logic]
-            [sokoban.levels :as levels]))
+            [sokoban.rules :as rules]
+            [sokoban.levels :as levels]
+            [sokoban.game :as game]))
 
 (def levels-per-page 10)
-
-(defrecord Game [world history input continue ui levels selected-level])
-(defn new-game [levels]
-  (Game. nil nil nil [true] :selection levels 0))
 
 ; Helper methods
 (defn put-string [screen coords offset text]
@@ -95,8 +92,8 @@
 (defmethod draw-ui :playing [screen game]
   (let [world (:world game)
         player (:player world)
-        matched-statues (logic/matched-statues world)
-        level-center (box-center (logic/get-bounds world))
+        matched-statues (rules/matched-statues world)
+        level-center (box-center (rules/get-bounds world))
         screen-center (box-center (s/get-size screen))
         offset (get-text-offset screen-center level-center)]
     (s/clear screen)
@@ -112,22 +109,6 @@
     (s/move-cursor screen 0 1)
     (s/redraw screen)))
 
-; Input processing
-(defn try-select-level [next-level game]
-  (let [min-level 0
-        max-level (count (:levels game))]
-    (if (<= min-level next-level (- max-level 1))
-      (assoc game :selected-level next-level)
-      game)))
-
-(defn start-game [game]
-  (let [{:keys [levels selected-level]} game
-        new-level (nth levels selected-level)]
-    (-> game
-      (assoc :world new-level)
-      (assoc :history [new-level])
-      (assoc :ui :playing))))
-
 (defmulti process-input
   (fn [game input]
     (:ui game)))
@@ -135,55 +116,35 @@
 (defmethod process-input :selection [game input]
   (let [selected-level (:selected-level game)]
     (case input
-      \j (try-select-level (inc selected-level) game)
-      \k (try-select-level (dec selected-level) game)
-      :page-down (try-select-level (+ selected-level levels-per-page) game)
-      :page-up (try-select-level (- selected-level levels-per-page) game)
-      :escape (assoc game :continue [])
-      :enter (start-game game)
+      \j (game/try-select-level game (inc selected-level))
+      \k (game/try-select-level game (dec selected-level))
+      :page-down (game/try-select-level game (+ selected-level levels-per-page))
+      :page-up (game/try-select-level game (- selected-level levels-per-page))
+      :escape (game/quit-game game)
+      :enter (game/start-game game)
       game)))
 
 (defmethod process-input :victory [game input]
   (case input
-    :escape (assoc game :continue [])
-    (-> game
-      (assoc :ui :selection)
-      (dissoc :world))))
-
-(defn apply-move [game move]
-  (let [next-world (logic/move-player (:world game) move)
-        history (:history game)]
-    (-> game
-        (assoc :world next-world)
-        (assoc :history (conj history next-world)))))
-
-(defn undo-move [game]
-  (let [history (:history game)
-        prev-history (pop history)
-        prev-world (peek prev-history)]
-    (if (empty? prev-history)
-      game
-      (-> game
-          (assoc :world prev-world)
-          (assoc :history prev-history)))))
+    :escape (game/quit-game game)
+    (game/level-selection game)))
 
 (defmethod process-input :playing [game input]
   (let [ui (:ui game)
         world (:world game)
-        ; logic/win? check should occur after we process current input
-        win (logic/win? world)]
-    (println world)
+        ; rules/win? check should occur after we process current input
+        win (rules/win? world)]
     (if win
-      (assoc game :ui :victory)
+      (game/victory game)
       (case input
-        :escape (assoc game :continue [])
-        \h (apply-move game :w)
-        \j (apply-move game :s)
-        \k (apply-move game :n)
-        \l (apply-move game :e)
-        \u (undo-move game)
-        \r (assoc game :world (nth (:levels game) (:selected-level game)))
-        \q (assoc game :ui :selection)
+        :escape (game/quit-game game)
+        \h (game/apply-move game :w)
+        \j (game/apply-move game :s)
+        \k (game/apply-move game :n)
+        \l (game/apply-move game :e)
+        \u (game/undo-move game)
+        \r (game/restart-game game)
+        \q (game/quit-level game)
         game
         ))))
 
@@ -206,7 +167,7 @@
    (letfn [(go []
              (let [screen (s/get-screen screen-type)]
                (s/in-screen screen
-                            (run-game (new-game (levels/get-all-levels)) screen))))]
+                            (run-game (game/new-game) screen))))]
      (if block?
        (go)
        (future (go))))))
@@ -218,4 +179,3 @@
                       (args ":text")  :text
                       :else           :auto)]
     (main screen-type true)))
-

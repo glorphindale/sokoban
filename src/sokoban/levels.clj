@@ -1,6 +1,6 @@
 (ns sokoban.levels
   (:require [clojure.string :as string]
-            [sokoban.logic :as logic]
+            [sokoban.rules :as rules]
             [clojure.java.io :as io]))
 
 (defn index
@@ -25,7 +25,7 @@
         zombies (transform-type indexed-str #{\. \* \+})
         statues (transform-type indexed-str #{\$ \*})
         player (transform-type indexed-str #{\@ \+}) ]
-    (logic/new-world (set walls) (set zombies) (set statues) (set player) level-name)))
+    (rules/new-world (set walls) (set zombies) (set statues) (set player) level-name)))
 
 (def test-level
   "######\n#+   #\n#$  $#\n#  *.#\n######")

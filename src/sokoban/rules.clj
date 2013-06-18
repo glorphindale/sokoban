@@ -1,4 +1,4 @@
-(ns sokoban.logic
+(ns sokoban.rules
   (:require [clojure.set :as css]
             [clojure.java.io :as io]))
 
