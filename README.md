@@ -25,7 +25,6 @@ Level collection was taken from [Sourcecode](http://www.sourcecode.se/sokoban/le
 ## Future work
 
 * Add proper victory screen
-* Add steps tracking
 * Add redo?
 * Add splash screen
 * Add backstory

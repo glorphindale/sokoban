@@ -98,6 +98,7 @@
         offset (get-text-offset screen-center level-center)]
     (s/clear screen)
     (s/put-string screen 0 0 (str "Level: " (:level-name world)))
+    (s/put-string screen 0 1 (str "Steps so far: " (:steps game)))
     (draw-symbol screen "#" (:walls world) offset :grey)
     (draw-symbol screen "z" (:zombies world) offset :red)
     (draw-symbol screen "$" (:statues world) offset :green)
@@ -106,7 +107,7 @@
     (draw-help screen ["Use h/j/k/l to move up/left/right/down"
                        "r to restart level, q for level selection, u to undo previous moves, ESC to exit"
                        "Move yourself (@) to push statues ($) onto zombies (z) to stay alive!"])
-    (s/move-cursor screen 0 1)
+    (s/move-cursor screen 0 2)
     (s/redraw screen)))
 
 (defmulti process-input

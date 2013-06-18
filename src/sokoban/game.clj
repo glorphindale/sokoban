@@ -2,10 +2,10 @@
   (:require [sokoban.rules :as rules]
             [sokoban.levels :as levels]))
 
-(defrecord Game [world history input continue ui levels selected-level])
+(defrecord Game [levels selected-level world history input continue ui steps])
 (defn new-game
   ([] (new-game (levels/get-all-levels)))
-  ([levels] (Game. nil nil nil [true] :selection levels 0)))
+  ([levels] (Game. levels 0 nil nil nil [true] :selection 0)))
 
 (defn start-game [game]
   (let [{:keys [levels selected-level]} game
@@ -13,19 +13,22 @@
     (-> game
       (assoc :world new-level)
       (assoc :history [new-level])
-      (assoc :ui :playing))))
+      (assoc :ui :playing)
+      (assoc :steps 0))))
 
 (defn restart-game [game]
-  (let [idx (:selected-level game)]
-    (assoc game :world
-      (nth (:levels game) idx))))
+  (start-game game))
 
 (defn apply-move [game move]
-  (let [next-world (rules/move-player (:world game) move)
+  (let [world (:world game)
+        next-world (rules/move-player world move)
         history (:history game)]
-    (-> game
-        (assoc :world next-world)
-        (assoc :history (conj history next-world)))))
+    (if (not= world next-world)
+      (-> game
+          (assoc :world next-world)
+          (assoc :history (conj history next-world))
+          (assoc :steps (inc (:steps game))))
+      game)))
 
 (defn undo-move [game]
   (let [history (:history game)
@@ -35,7 +38,8 @@
       game
       (-> game
           (assoc :world prev-world)
-          (assoc :history prev-history)))))
+          (assoc :history prev-history)
+          (assoc :steps (dec (:steps game)))))))
 
 (defn level-selection [game]
   (-> game
