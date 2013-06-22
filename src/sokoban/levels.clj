@@ -42,7 +42,7 @@
 ; Collection parsing
 (defn clean-file [file]
   (let [content (slurp file)]
-    (filter not-empty (clojure.string/split content #"\r\n"))))
+    (filter not-empty (clojure.string/split content #"\n"))))
 
 (defn get-parts [content]
   (->> content
@@ -50,12 +50,12 @@
        (filter #(not (.startsWith (first %) ";")))))
 
 (defn get-level-name [coll-path idx]
-  (let [[_ coll-name] (re-find #".+\\(.+).slc" (str coll-path))]
+  (let [[_ coll-name] (re-find #".+[\\|/](.+).slc" (str coll-path))]
     (str "(" coll-name ") level " idx)))
 
 (defn levels-from-collection [filename]
   (let [parts (-> filename clean-file get-parts)
-        raw-levels (map #(clojure.string/join "\r\n" %) parts)]
+        raw-levels (map #(clojure.string/join "\n" %) parts)]
     (map-indexed
        (fn [idx level] (parse-level level (get-level-name filename (inc idx))))
        raw-levels)))

@@ -13,10 +13,8 @@ Place your own levels into the "levels" directory. Both single level files and c
 j/k/pageup/pagedown to select level
 
 h/j/k/l to move
-r to restart
-q to return to the level selection
-u to undo moves
-escape to exit
+
+r to restart, q to return to the level selection, u to undo moves, escape to exit
 
 ## Resources
 
