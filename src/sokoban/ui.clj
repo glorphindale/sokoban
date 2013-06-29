@@ -8,10 +8,13 @@
 (def levels-per-page 10)
 
 ; Helper methods
-(defn put-string [screen coords offset text]
-  (let [[x y] coords
-        [ox oy] offset]
-    (s/put-string screen (+ x ox) (+ y oy) text)))
+(defn put-string
+  ([screen coords offset text]
+    (put-string screen coords offset text :white :black))
+  ([screen coords offset text fg-color bg-color]
+    (let [[x y] coords
+          [ox oy] offset]
+      (s/put-string screen (+ x ox) (+ y oy) text {:fg fg-color :bg bg-color}))))
 
 (defn guess-box [text-lines]
   (let [max-y (count text-lines)
@@ -56,10 +59,26 @@
           col-pos (int (- (/ cols 2) (/ msg-len 2)))]
       (s/put-string screen col-pos row msg {:fg :grey}))))
 
-; There are three screens - level selection, game and victory.
+; There are four screens - splash, level selection, game and victory.
 (defmulti draw-ui
   (fn [screen game]
     (:ui game)))
+
+(defmethod draw-ui :splash [screen game]
+  (let [lines ["You wake up at the cemetery."
+               "It's getting dark, and all of the tombstones are moved."
+               "Zombies start to rise from their graves."
+               "You must put tombstones back, or... Brainzzzzzz..."
+               "Welcome to the"]
+        zombies "SOKOBAN OF THE DEAD"
+        text-center (box-center (guess-box lines))
+        screen-center (box-center (s/get-size screen))
+        offset (get-text-offset screen-center text-center)]
+    (s/clear screen)
+    (doseq [[line text] (map-indexed vector lines)]
+        (put-string screen [0 line] offset text))
+    (put-string screen [(inc (count (last lines))) (dec (count lines))] offset zombies :green :red)
+    (s/redraw screen)))
 
 (defmethod draw-ui :selection [screen game]
   (let [{:keys [selected-level levels]} game
@@ -79,11 +98,12 @@
     (s/redraw screen)))
 
 (defmethod draw-ui :victory [screen game]
-  (let [lines ["Victory!" "Press any key to return to the level selection screen"]
+  (let [lines ["Victory!"
+               (str "Level completed in " (:steps game) " steps")
+               "Press any key to return to the level selection screen"]
         text-center (box-center (guess-box lines))
         screen-center (box-center (s/get-size screen))
         offset (get-text-offset screen-center text-center)]
-    ; TODO add proper victory screen
     (s/clear screen)
     (doseq [[line text] (map-indexed vector lines)]
         (put-string screen [0 line] offset text))
@@ -113,6 +133,9 @@
 (defmulti process-input
   (fn [game input]
     (:ui game)))
+
+(defmethod process-input :splash [game _]
+  (game/level-selection game))
 
 (defmethod process-input :selection [game input]
   (let [selected-level (:selected-level game)]

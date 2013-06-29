@@ -5,7 +5,7 @@
 (defrecord Game [levels selected-level world history input continue ui steps])
 (defn new-game
   ([] (new-game (levels/get-all-levels)))
-  ([levels] (Game. levels 0 nil nil nil [true] :selection 0)))
+  ([levels] (Game. levels 0 nil nil nil [true] :splash 0)))
 
 (defn start-game [game]
   (let [{:keys [levels selected-level]} game
