@@ -47,6 +47,20 @@
     ))
 
 ; Actual UI drawing
+(defn draw-text-centered
+  ([screen lines center-each-line]
+    (let [text-center (box-center (guess-box lines))
+          screen-center (box-center (s/get-size screen))
+          [o-x o-y] (get-text-offset screen-center text-center)
+          [cols _] (s/get-size screen)]
+      (s/clear screen)
+      (doseq [[line text] (map-indexed vector lines)]
+        (let [col-pos (int (- (/ cols 2) (/ (count text) 2)))]
+          (if center-each-line
+            (put-string screen [0 line] [col-pos o-y] text)
+            (put-string screen [0 line] [o-x o-y] text))))))
+  ([screen lines] (draw-text-centered screen lines true)))
+
 (defn draw-symbol [screen type-symbol coordinates [off-x off-y] color]
   (doseq [[x y] coordinates]
     (s/put-string screen (+ x off-x) (+ y off-y) type-symbol {:fg color})))
@@ -75,24 +89,20 @@
         screen-center (box-center (s/get-size screen))
         offset (get-text-offset screen-center text-center)]
     (s/clear screen)
-    (doseq [[line text] (map-indexed vector lines)]
-        (put-string screen [0 line] offset text))
-    (put-string screen [(inc (count (last lines))) (dec (count lines))] offset zombies :green :red)
+    (draw-text-centered screen lines)
+    ; There is no way around this ugliness until we have full-fledged draw-arbitrary-text-with-colors function
+    (put-string screen [(inc (count (last lines))) (count lines)] offset zombies :green :red)
     (s/redraw screen)))
 
 (defmethod draw-ui :selection [screen game]
   (let [{:keys [selected-level levels]} game
         levels-text (prepare-selection-text game)
-        lines (map-indexed vector levels-text)
         selected-level-offset (rem selected-level levels-per-page)
         text-center (box-center (guess-box levels-text))
         screen-center (box-center (s/get-size screen))
-        offset (get-text-offset screen-center text-center)
-        [_ rows] (s/get-size screen)
-        last-row (dec rows)]
+        offset (get-text-offset screen-center text-center)]
     (s/clear screen)
-    (doseq [[line text] lines]
-      (put-string screen [0 line] offset text))
+    (draw-text-centered screen levels-text false)
     (s/move-cursor screen (+ 2 (first offset)) (+ (inc selected-level-offset) (second offset)))
     (draw-help screen ["Use j/k/PageUp/PageDown to select a level, Enter to play, ESC to exit"])
     (s/redraw screen)))
@@ -100,13 +110,9 @@
 (defmethod draw-ui :victory [screen game]
   (let [lines ["Victory!"
                (str "Level completed in " (:steps game) " steps")
-               "Press any key to return to the level selection screen"]
-        text-center (box-center (guess-box lines))
-        screen-center (box-center (s/get-size screen))
-        offset (get-text-offset screen-center text-center)]
+               "Press any key to return to the level selection screen"]]
     (s/clear screen)
-    (doseq [[line text] (map-indexed vector lines)]
-        (put-string screen [0 line] offset text))
+      (draw-text-centered screen lines)
     (s/redraw screen)))
 
 (defmethod draw-ui :playing [screen game]

@@ -23,11 +23,10 @@ Level collection was taken from [Sourcecode](http://www.sourcecode.se/sokoban/le
 ## Future work
 
 * Add redo?
-* Add backstory
 * Add handling of big levels - scrolling, centering viewport on the player
 * Add proper font selection (looks ugly in linux swing)
-* Add general-purpose draw-text-centered routine
 * Add tutorial
+* Fix bug that requires additional keypress before level completion
 
 ## License
 
