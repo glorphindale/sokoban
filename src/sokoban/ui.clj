@@ -9,6 +9,8 @@
 
 ; Helper methods
 (defn put-string
+  "Put some text on the screen. Takes two vectors of coordinates: absolute position and an additional offset.
+  This allows to handle relative text rendering in this one function."
   ([screen coords offset text]
     (put-string screen coords offset text :white :black))
   ([screen coords offset text fg-color bg-color]
@@ -16,6 +18,7 @@
           [ox oy] offset]
       (s/put-string screen (+ x ox) (+ y oy) text {:fg fg-color :bg bg-color}))))
 
+; Several routines to handle "centered text drawing"
 (defn guess-box [text-lines]
   (let [max-y (count text-lines)
         max-x (apply max (map #(.length %) text-lines))]
@@ -32,6 +35,7 @@
     [(- s-x t-x) (- s-y t-y)]))
 
 (defn prepare-selection-text [game]
+  "Given a game object prepare a sequence of lines for a level selection screen."
   (let [{:keys [selected-level levels]} game
         total-levels (count levels)
         current-page (quot selected-level levels-per-page)
@@ -48,6 +52,10 @@
 
 ; Actual UI drawing
 (defn draw-text-centered
+  "Allows to draw text centered.
+  Has two modes: treat specified text as single block and align it as a whole,
+  or additionaly align every single line in the text."
+  ([screen lines] (draw-text-centered screen lines true))
   ([screen lines center-each-line]
     (let [text-center (box-center (guess-box lines))
           screen-center (box-center (s/get-size screen))
@@ -58,10 +66,10 @@
         (let [col-pos (int (- (/ cols 2) (/ (count text) 2)))]
           (if center-each-line
             (put-string screen [0 line] [col-pos o-y] text)
-            (put-string screen [0 line] [o-x o-y] text))))))
-  ([screen lines] (draw-text-centered screen lines true)))
+            (put-string screen [0 line] [o-x o-y] text)))))))
 
 (defn draw-symbol [screen type-symbol coordinates [off-x off-y] color]
+  "Draw specified symbol at the specified sequence of coordinates"
   (doseq [[x y] coordinates]
     (s/put-string screen (+ x off-x) (+ y off-y) type-symbol {:fg color})))
 
@@ -85,13 +93,13 @@
                "You must put tombstones back, or... Brainzzzzzz..."
                "Welcome to the"]
         zombies "SOKOBAN OF THE DEAD"
-        text-center (box-center (guess-box lines))
-        screen-center (box-center (s/get-size screen))
-        offset (get-text-offset screen-center text-center)]
+        [cols rows] (s/get-size screen)
+        col-pos (int (- (/ cols 2) (/ (count zombies) 2)))
+        row-pos (int (+ 1 (/ rows 2) (/ (count lines) 2)))]
     (s/clear screen)
     (draw-text-centered screen lines)
     ; There is no way around this ugliness until we have full-fledged draw-arbitrary-text-with-colors function
-    (put-string screen [(inc (count (last lines))) (count lines)] offset zombies :green :red)
+    (put-string screen [0 0] [col-pos row-pos] zombies :green :red)
     (s/redraw screen)))
 
 (defmethod draw-ui :selection [screen game]
@@ -136,6 +144,7 @@
     (s/move-cursor screen 0 2)
     (s/redraw screen)))
 
+; Input processing
 (defmulti process-input
   (fn [game input]
     (:ui game)))

@@ -2,6 +2,7 @@
 
 You wake up at the cemetery. It's getting dark, and all of the tombstones are moved.
 Zombies start to rise from their graves. You must put tombstones back, or... Brainzzzzzz...
+Welcome to the Sokoban of the Dead.
 
 Clojure app for playing sokoban.
 Inspired by the [RubyQuiz](http://www.rubyquiz.com/quiz5.html) and based on the [The Caves of Clojure](http://stevelosh.com/blog/2012/07/caves-of-clojure-01/).
