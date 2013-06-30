@@ -7,6 +7,8 @@ Welcome to the Sokoban of the Dead.
 Clojure app for playing Sokoban.
 Inspired by the [RubyQuiz](http://www.rubyquiz.com/quiz5.html) and based on [The Caves of Clojure](http://stevelosh.com/blog/2012/07/caves-of-clojure-01/).
 
+![Sokoban of the Dead screenshot](screenshot.png "Sokoban of the Dead")
+
 ## Usage
 
 Place your own levels into the "levels" directory. Both single level files and collections (.slc) files are accepted.
