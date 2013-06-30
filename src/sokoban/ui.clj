@@ -3,7 +3,8 @@
             [clojure.string :as string]
             [sokoban.rules :as rules]
             [sokoban.levels :as levels]
-            [sokoban.game :as game]))
+            [sokoban.game :as game])
+  (:gen-class))
 
 (def levels-per-page 10)
 
